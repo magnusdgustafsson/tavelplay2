@@ -2951,9 +2951,9 @@ function calculateBestKeeperWinners(goalkeepers) {
     });
 
     scored.sort((a, b) => {
-        if (b.cleanSheets !== a.cleanSheets) return b.cleanSheets - a.cleanSheets;
-        if (a.gcPerGame !== b.gcPerGame) return a.gcPerGame - b.gcPerGame;
         if (b.winsAsGK !== a.winsAsGK) return b.winsAsGK - a.winsAsGK;
+        if (a.gcPerGame !== b.gcPerGame) return a.gcPerGame - b.gcPerGame;
+        if (b.cleanSheets !== a.cleanSheets) return b.cleanSheets - a.cleanSheets;
         return a.id.localeCompare(b.id);
     });
 
@@ -2961,9 +2961,9 @@ function calculateBestKeeperWinners(goalkeepers) {
     if (!best) return [];
 
     return scored
-        .filter(s => s.cleanSheets === best.cleanSheets &&
+        .filter(s => s.winsAsGK === best.winsAsGK &&
                      s.gcPerGame === best.gcPerGame &&
-                     s.winsAsGK === best.winsAsGK)
+                     s.cleanSheets === best.cleanSheets)
         .map(s => s.id);
 }
 
@@ -3709,15 +3709,15 @@ function renderTodaysStats() {
             const sortedKeepers = [...gks].sort((a, b) => {
                 const aGames = a.gamesAsGK || 0;
                 const bGames = b.gamesAsGK || 0;
-                const aCS = a.cleanSheets || 0;
-                const bCS = b.cleanSheets || 0;
-                const aGCPerGame = aGames > 0 ? (a.goalsConceded || 0) / aGames : Number.POSITIVE_INFINITY;
-                const bGCPerGame = bGames > 0 ? (b.goalsConceded || 0) / bGames : Number.POSITIVE_INFINITY;
-                if (bCS !== aCS) return bCS - aCS;
-                if (aGCPerGame !== bGCPerGame) return aGCPerGame - bGCPerGame;
                 const aWins = a.winsAsGK || 0;
                 const bWins = b.winsAsGK || 0;
+                const aGCPerGame = aGames > 0 ? (a.goalsConceded || 0) / aGames : Number.POSITIVE_INFINITY;
+                const bGCPerGame = bGames > 0 ? (b.goalsConceded || 0) / bGames : Number.POSITIVE_INFINITY;
+                const aCS = a.cleanSheets || 0;
+                const bCS = b.cleanSheets || 0;
                 if (bWins !== aWins) return bWins - aWins;
+                if (aGCPerGame !== bGCPerGame) return aGCPerGame - bGCPerGame;
+                if (bCS !== aCS) return bCS - aCS;
                 return a.name.localeCompare(b.name);
             });
 
