@@ -30,6 +30,8 @@ const AppState = {
     },
     viewingTeamsFromGame: false,
     teamAddPlayerMode: false, // Show per-team add controls on View Teams during game
+    teamRemovePlayerMode: false, // Show per-player remove controls on View Teams during game
+    teamShuffleAnimating: false,
     todaysStatsView: 'field', // 'field' | 'gk'
     editingGameIndex: null // index into gameHistory when editing from View Games
 };
@@ -42,6 +44,8 @@ let recurringManageOpen = false;
 
 let teamSelectionCountdownInterval = null;
 let startGameCountdownInterval = null;
+let teamShuffleTimer = null;
+const TEAM_SHUFFLE_DURATION_MS = 4000;
 
 // Initialize App
 function initApp() {
@@ -282,6 +286,7 @@ function showScreen(screenId) {
     } else {
         clearTeamSelectionCountdown();
         clearStartGameCountdown();
+        clearTeamShuffleAnimation();
     }
     
     // Hide modal if showing a new screen
@@ -376,6 +381,11 @@ function updateTeamSelectionFooter() {
         addPlayerDuringGameBtn.style.display = viewingFromGame ? '' : 'none';
         addPlayerDuringGameBtn.textContent = AppState.teamAddPlayerMode ? 'Done' : 'Add Player';
     }
+    const removePlayerDuringGameBtn = document.getElementById('remove-player-during-game-toggle-btn');
+    if (removePlayerDuringGameBtn) {
+        removePlayerDuringGameBtn.style.display = viewingFromGame ? '' : 'none';
+        removePlayerDuringGameBtn.textContent = AppState.teamRemovePlayerMode ? 'Done' : 'Remove Player';
+    }
     
     if (viewingFromGame && backToGameBtn) {
         AppState.teamEditMode = false;
@@ -388,14 +398,19 @@ function updateTeamSelectionFooter() {
                 clearTeamSelectionCountdown();
                 AppState.viewingTeamsFromGame = false;
                 AppState.teamAddPlayerMode = false;
+                AppState.teamRemovePlayerMode = false;
                 showScreen('game-progress');
                 return;
             }
             backToGameBtn.textContent = `Back to Game (${seconds})`;
         }, 1000);
+    } else if (AppState.teamShuffleAnimating) {
+        setTeamSelectionControlsEnabled(false);
     } else {
         AppState.teamAddPlayerMode = false;
+        AppState.teamRemovePlayerMode = false;
         if (addPlayerDuringGameBtn) addPlayerDuringGameBtn.style.display = 'none';
+        if (removePlayerDuringGameBtn) removePlayerDuringGameBtn.style.display = 'none';
         startStartGameCountdown();
     }
 }
@@ -714,7 +729,9 @@ function startGame() {
         playerPoints: {}, // Track points per player in this game for MVP calculation
         plusMinusEnabled: plusMinusEnabled,
         lateJoinerIds: [], // Players added after their own team scored its first goal — no win credit
-        playerJoinedAtGoalCount: {} // playerId -> goal index when they joined the team
+        removedPlayers: [], // { id, team, winCredit, leftAtGoalCount } — mid-game leavers
+        playerJoinedAtGoalCount: {}, // playerId -> goal index when they joined the team
+        playerLeftAtGoalCount: {} // playerId -> goal index when they left the team
     };
 
     [...AppState.currentTeams.blackTeam, ...AppState.currentTeams.whiteTeam].forEach(player => {
@@ -802,13 +819,14 @@ function registerGoal(team, scorer, assist) {
     // Update plus/minus if enabled for this game
     if (AppState.currentGame.plusMinusEnabled) {
         const goalIndex = AppState.currentGame.goals.length - 1;
-        const blackTeam = AppState.currentGame.blackTeam || [];
-        const whiteTeam = AppState.currentGame.whiteTeam || [];
-        const scoringTeam = team === 'black' ? blackTeam : whiteTeam;
-        const concedingTeam = team === 'black' ? whiteTeam : blackTeam;
+        const scoringTeam = getTeamPlayersForPlusMinus(AppState.currentGame, team, goalIndex);
+        const concedingTeam = getTeamPlayersForPlusMinus(
+            AppState.currentGame,
+            team === 'black' ? 'white' : 'black',
+            goalIndex
+        );
         
         scoringTeam.forEach(playerObj => {
-            if (!wasPlayerOnTeamForGoal(playerObj.id, goalIndex)) return;
             const p = AppState.players.find(pl => pl.id === playerObj.id);
             if (p && typeof p.plusMinus === 'number') {
                 p.plusMinus += 1;
@@ -816,7 +834,6 @@ function registerGoal(team, scorer, assist) {
         });
         
         concedingTeam.forEach(playerObj => {
-            if (!wasPlayerOnTeamForGoal(playerObj.id, goalIndex)) return;
             const p = AppState.players.find(pl => pl.id === playerObj.id);
             if (p && typeof p.plusMinus === 'number') {
                 p.plusMinus -= 1;
@@ -886,13 +903,14 @@ function undoLastGoal() {
     // Revert plus/minus if enabled for this game
     if (AppState.currentGame.plusMinusEnabled) {
         const goalIndex = AppState.currentGame.goals.length;
-        const blackTeam = AppState.currentGame.blackTeam || [];
-        const whiteTeam = AppState.currentGame.whiteTeam || [];
-        const scoringTeam = team === 'black' ? blackTeam : whiteTeam;
-        const concedingTeam = team === 'black' ? whiteTeam : blackTeam;
+        const scoringTeam = getTeamPlayersForPlusMinus(AppState.currentGame, team, goalIndex);
+        const concedingTeam = getTeamPlayersForPlusMinus(
+            AppState.currentGame,
+            team === 'black' ? 'white' : 'black',
+            goalIndex
+        );
         
         scoringTeam.forEach(playerObj => {
-            if (!wasPlayerOnTeamForGoal(playerObj.id, goalIndex)) return;
             const p = AppState.players.find(pl => pl.id === playerObj.id);
             if (p && typeof p.plusMinus === 'number') {
                 p.plusMinus -= 1;
@@ -900,7 +918,6 @@ function undoLastGoal() {
         });
         
         concedingTeam.forEach(playerObj => {
-            if (!wasPlayerOnTeamForGoal(playerObj.id, goalIndex)) return;
             const p = AppState.players.find(pl => pl.id === playerObj.id);
             if (p && typeof p.plusMinus === 'number') {
                 p.plusMinus += 1;
@@ -1000,6 +1017,9 @@ function endGame() {
     
     let winningTeam = null;
     const lateJoinerIds = new Set(AppState.currentGame.lateJoinerIds || []);
+    const removedPlayers = Array.isArray(AppState.currentGame.removedPlayers)
+        ? AppState.currentGame.removedPlayers
+        : [];
 
     if (blackScore > whiteScore) {
         // Black team wins
@@ -1017,8 +1037,17 @@ function endGame() {
         });
     }
     // If tie, no one gets a win
+
+    // Mid-game leavers: win credit if they stayed through own team's 2nd goal (and weren't late joiners)
+    if (winningTeam) {
+        removedPlayers.forEach(rp => {
+            if (rp.team !== winningTeam || !rp.winCredit || lateJoinerIds.has(rp.id)) return;
+            const p = AppState.players.find(pl => pl.id === rp.id);
+            if (p) p.gamesWon++;
+        });
+    }
     
-    // Increment games played for all players in this game
+    // Increment games played for all players still on a team at end of game
     AppState.currentGame.blackTeam.forEach(player => {
         const p = AppState.players.find(pl => pl.id === player.id);
         if (p) p.gamesPlayed++;
@@ -1028,7 +1057,7 @@ function endGame() {
         if (p) p.gamesPlayed++;
     });
     
-    // Track points in wins for MVP calculation
+    // Track points in wins for MVP calculation (roster + eligible leavers)
     if (winningTeam) {
         const winningTeamPlayers = winningTeam === 'black' 
             ? AppState.currentGame.blackTeam 
@@ -1039,6 +1068,14 @@ function endGame() {
             if (p && AppState.currentGame.playerPoints[player.id]) {
                 p.pointsInWins += AppState.currentGame.playerPoints[player.id];
             }
+        });
+
+        removedPlayers.forEach(rp => {
+            if (rp.team !== winningTeam || !rp.winCredit || lateJoinerIds.has(rp.id)) return;
+            const pts = AppState.currentGame.playerPoints[rp.id] || 0;
+            if (pts <= 0) return;
+            const p = AppState.players.find(pl => pl.id === rp.id);
+            if (p) p.pointsInWins += pts;
         });
     }
 
@@ -1156,8 +1193,6 @@ function resetAllStatsFromHistory() {
                 whiteScore++;
             }
 
-            const joinedAt = (playerId) => game.playerJoinedAtGoalCount?.[playerId] ?? 0;
-
             const scorerId = goal.scorer;
             if (!game.playerGoals[scorerId]) {
                 game.playerGoals[scorerId] = 0;
@@ -1189,13 +1224,14 @@ function resetAllStatsFromHistory() {
             
             // Apply plus/minus for this goal if enabled on this game
             if (plusMinusEnabled) {
-                const blackTeam = Array.isArray(game.blackTeam) ? game.blackTeam : [];
-                const whiteTeam = Array.isArray(game.whiteTeam) ? game.whiteTeam : [];
-                const scoringTeam = goal.team === 'black' ? blackTeam : whiteTeam;
-                const concedingTeam = goal.team === 'black' ? whiteTeam : blackTeam;
+                const scoringTeam = getTeamPlayersForPlusMinus(game, goal.team, goalIndex);
+                const concedingTeam = getTeamPlayersForPlusMinus(
+                    game,
+                    goal.team === 'black' ? 'white' : 'black',
+                    goalIndex
+                );
                 
                 scoringTeam.forEach(playerObj => {
-                    if (joinedAt(playerObj.id) > goalIndex) return;
                     const p = players.find(pl => pl.id === playerObj.id);
                     if (p) {
                         p.plusMinus = (p.plusMinus || 0) + 1;
@@ -1203,7 +1239,6 @@ function resetAllStatsFromHistory() {
                 });
                 
                 concedingTeam.forEach(playerObj => {
-                    if (joinedAt(playerObj.id) > goalIndex) return;
                     const p = players.find(pl => pl.id === playerObj.id);
                     if (p) {
                         p.plusMinus = (p.plusMinus || 0) - 1;
@@ -1251,6 +1286,7 @@ function resetAllStatsFromHistory() {
         }
 
         const lateJoinerIds = new Set(game.lateJoinerIds || []);
+        const removedPlayers = Array.isArray(game.removedPlayers) ? game.removedPlayers : [];
 
         if (winningTeam === 'black') {
             blackTeam.forEach(playerObj => {
@@ -1269,12 +1305,32 @@ function resetAllStatsFromHistory() {
         }
 
         if (winningTeam) {
+            removedPlayers.forEach(rp => {
+                if (rp.team !== winningTeam || !rp.winCredit || lateJoinerIds.has(rp.id)) return;
+                const p = players.find(pl => pl.id === rp.id);
+                if (p) {
+                    p.gamesWon = (p.gamesWon || 0) + 1;
+                }
+            });
+        }
+
+        if (winningTeam) {
             const winningTeamPlayers = winningTeam === 'black' ? blackTeam : whiteTeam;
             winningTeamPlayers.forEach(playerObj => {
                 const pid = playerObj.id;
                 const p = players.find(pl => pl.id === pid);
                 const ptsInGame = game.playerPoints[pid] || 0;
                 if (p && ptsInGame > 0) {
+                    p.pointsInWins = (p.pointsInWins || 0) + ptsInGame;
+                }
+            });
+
+            removedPlayers.forEach(rp => {
+                if (rp.team !== winningTeam || !rp.winCredit || lateJoinerIds.has(rp.id)) return;
+                const ptsInGame = game.playerPoints[rp.id] || 0;
+                if (ptsInGame <= 0) return;
+                const p = players.find(pl => pl.id === rp.id);
+                if (p) {
                     p.pointsInWins = (p.pointsInWins || 0) + ptsInGame;
                 }
             });
@@ -1857,6 +1913,8 @@ function renderTeamAddPlayerControls(teamSide, teamDiv) {
 
 function renderTeamDisplay(teams) {
     if (!teams) return;
+
+    const shuffling = !!AppState.teamShuffleAnimating;
     
     // Update team headers with custom names
     const blackTeamHeader = document.querySelector('.team-section.team-black h2');
@@ -1885,8 +1943,8 @@ function renderTeamDisplay(teams) {
             nameDiv.textContent = player.name;
             container.appendChild(nameDiv);
             
-            // Add move and remove buttons only in edit mode
-            if (AppState.teamEditMode) {
+            // Add move and remove buttons only in edit mode (pre-game)
+            if (AppState.teamEditMode && !shuffling) {
                 const moveBtn = document.createElement('button');
                 moveBtn.className = 'move-player-btn move-right';
                 moveBtn.textContent = '→';
@@ -1901,15 +1959,24 @@ function renderTeamDisplay(teams) {
                 removeBtn.setAttribute('data-player-id', player.id);
                 removeBtn.title = 'Remove from game';
                 container.appendChild(removeBtn);
+            } else if (AppState.teamRemovePlayerMode && !shuffling) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-during-game-btn';
+                removeBtn.textContent = 'Remove';
+                removeBtn.setAttribute('data-player-id', player.id);
+                removeBtn.title = 'Remove from this game';
+                container.appendChild(removeBtn);
             }
             
             blackTeamDiv.appendChild(container);
         });
 
-        renderTeamAddPlayerControls('black', blackTeamDiv);
+        if (!shuffling) {
+            renderTeamAddPlayerControls('black', blackTeamDiv);
+        }
 
         // Goalkeeper selector for black team
-        if (AppState.settings.goalkeepersEnabled && AppState.goalkeepers.length > 0) {
+        if (!shuffling && AppState.settings.goalkeepersEnabled && AppState.goalkeepers.length > 0) {
             const gkContainer = document.createElement('div');
             gkContainer.className = 'team-goalkeeper-selector';
             const label = document.createElement('span');
@@ -1955,8 +2022,8 @@ function renderTeamDisplay(teams) {
             nameDiv.textContent = player.name;
             container.appendChild(nameDiv);
             
-            // Add move and remove buttons only in edit mode
-            if (AppState.teamEditMode) {
+            // Add move and remove buttons only in edit mode (pre-game)
+            if (AppState.teamEditMode && !shuffling) {
                 const moveBtn = document.createElement('button');
                 moveBtn.className = 'move-player-btn move-left';
                 moveBtn.textContent = '←';
@@ -1971,15 +2038,24 @@ function renderTeamDisplay(teams) {
                 removeBtn.setAttribute('data-player-id', player.id);
                 removeBtn.title = 'Remove from game';
                 container.appendChild(removeBtn);
+            } else if (AppState.teamRemovePlayerMode && !shuffling) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-during-game-btn';
+                removeBtn.textContent = 'Remove';
+                removeBtn.setAttribute('data-player-id', player.id);
+                removeBtn.title = 'Remove from this game';
+                container.appendChild(removeBtn);
             }
             
             whiteTeamDiv.appendChild(container);
         });
 
-        renderTeamAddPlayerControls('white', whiteTeamDiv);
+        if (!shuffling) {
+            renderTeamAddPlayerControls('white', whiteTeamDiv);
+        }
 
         // Goalkeeper selector for white team
-        if (AppState.settings.goalkeepersEnabled && AppState.goalkeepers.length > 0) {
+        if (!shuffling && AppState.settings.goalkeepersEnabled && AppState.goalkeepers.length > 0) {
             const gkContainer = document.createElement('div');
             gkContainer.className = 'team-goalkeeper-selector';
             const label = document.createElement('span');
@@ -2024,7 +2100,95 @@ function renderTeamDisplay(teams) {
     }
     
     // Adjust font sizes to ensure all players are visible without scrolling
-    setTimeout(() => adjustTeamSelectionFontSize(), 10);
+    if (!shuffling) {
+        setTimeout(() => adjustTeamSelectionFontSize(), 10);
+    }
+}
+
+function clearTeamShuffleAnimation() {
+    if (teamShuffleTimer !== null) {
+        clearTimeout(teamShuffleTimer);
+        teamShuffleTimer = null;
+    }
+    const wasAnimating = AppState.teamShuffleAnimating;
+    AppState.teamShuffleAnimating = false;
+    const teamsContainer = document.querySelector('.teams-container');
+    if (teamsContainer) {
+        teamsContainer.classList.remove('team-shuffle-active');
+    }
+    if (wasAnimating) {
+        setTeamSelectionControlsEnabled(true);
+    }
+}
+
+function setTeamSelectionControlsEnabled(enabled) {
+    [
+        'rematch-btn',
+        'edit-teams-btn',
+        'swap-sides-btn',
+        'finish-session-team-selection-btn',
+        'start-game-btn'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !enabled;
+    });
+}
+
+function createRandomTeamPreview(allPlayers, blackCount, gkIds) {
+    const shuffled = [...allPlayers].sort(() => Math.random() - 0.5);
+    return {
+        blackTeam: shuffled.slice(0, blackCount),
+        whiteTeam: shuffled.slice(blackCount),
+        blackGKId: gkIds.blackGKId || null,
+        whiteGKId: gkIds.whiteGKId || null
+    };
+}
+
+function startTeamShuffleAnimation(finalTeams) {
+    clearTeamShuffleAnimation();
+    if (!finalTeams) return;
+
+    AppState.teamShuffleAnimating = true;
+    setTeamSelectionControlsEnabled(false);
+    clearStartGameCountdown();
+
+    const teamsContainer = document.querySelector('.teams-container');
+    if (teamsContainer) {
+        teamsContainer.classList.add('team-shuffle-active');
+    }
+
+    const allPlayers = [...finalTeams.blackTeam, ...finalTeams.whiteTeam];
+    const blackCount = finalTeams.blackTeam.length;
+    const gkIds = {
+        blackGKId: finalTeams.blackGKId || null,
+        whiteGKId: finalTeams.whiteGKId || null
+    };
+
+    const savedLineup = AppState.currentStartingLineup;
+    AppState.currentStartingLineup = null;
+
+    const start = Date.now();
+
+    function frame() {
+        const elapsed = Date.now() - start;
+        if (elapsed >= TEAM_SHUFFLE_DURATION_MS || AppState.currentScreen !== 'team-selection') {
+            AppState.currentStartingLineup = savedLineup;
+            clearTeamShuffleAnimation();
+            renderTeamDisplay(finalTeams);
+            if (AppState.currentScreen === 'team-selection' && !AppState.viewingTeamsFromGame) {
+                startStartGameCountdown();
+            }
+            return;
+        }
+
+        const progress = elapsed / TEAM_SHUFFLE_DURATION_MS;
+        const delay = Math.round(50 + progress * progress * 320);
+
+        renderTeamDisplay(createRandomTeamPreview(allPlayers, blackCount, gkIds));
+        teamShuffleTimer = setTimeout(frame, delay);
+    }
+
+    frame();
 }
 
 function renderTeamSelection() {
@@ -2046,6 +2210,8 @@ function renderTeamSelection() {
         whiteGKId: AppState.currentTeams ? AppState.currentTeams.whiteGKId || null : null
     };
 
+    let didRandomize = false;
+
     // Only randomize if random teams is enabled, otherwise keep current teams
     if (AppState.settings.randomTeamsEnabled) {
         // Randomize teams and store them
@@ -2057,6 +2223,7 @@ function renderTeamSelection() {
             blackGKId: previousGKIds.blackGKId,
             whiteGKId: previousGKIds.whiteGKId
         };
+        didRandomize = true;
     } else {
         // Keep current teams, but ensure they exist
         if (!AppState.currentTeams) {
@@ -2068,6 +2235,7 @@ function renderTeamSelection() {
                 blackGKId: previousGKIds.blackGKId,
                 whiteGKId: previousGKIds.whiteGKId
             };
+            didRandomize = true;
         }
     }
 
@@ -2077,7 +2245,12 @@ function renderTeamSelection() {
         AppState.currentStartingLineup = null;
     }
 
-    renderTeamDisplay(AppState.currentTeams);
+    if (didRandomize) {
+        startTeamShuffleAnimation(AppState.currentTeams);
+    } else {
+        clearTeamShuffleAnimation();
+        renderTeamDisplay(AppState.currentTeams);
+    }
 }
 
 function toggleTeamEditMode() {
@@ -2148,9 +2321,96 @@ function isPlayerLateJoiner(playerId) {
     return !!(AppState.currentGame?.lateJoinerIds?.includes(playerId));
 }
 
-function wasPlayerOnTeamForGoal(playerId, goalIndex) {
-    const joinedAt = AppState.currentGame?.playerJoinedAtGoalCount?.[playerId] ?? 0;
-    return joinedAt <= goalIndex;
+function wasPlayerOnTeamForGoal(playerId, goalIndex, game = AppState.currentGame) {
+    const joinedAt = game?.playerJoinedAtGoalCount?.[playerId] ?? 0;
+    if (joinedAt > goalIndex) return false;
+    const leftAt = game?.playerLeftAtGoalCount?.[playerId];
+    if (leftAt !== undefined && leftAt !== null && leftAt <= goalIndex) return false;
+    return true;
+}
+
+function getTeamPlayersForPlusMinus(game, teamSide, goalIndex) {
+    if (!game) return [];
+    const teamKey = teamSide === 'black' ? 'blackTeam' : 'whiteTeam';
+    const onRoster = (Array.isArray(game[teamKey]) ? game[teamKey] : [])
+        .filter(p => wasPlayerOnTeamForGoal(p.id, goalIndex, game))
+        .map(p => ({ id: p.id }));
+
+    const removed = (Array.isArray(game.removedPlayers) ? game.removedPlayers : [])
+        .filter(rp => rp.team === teamSide && wasPlayerOnTeamForGoal(rp.id, goalIndex, game))
+        .map(rp => ({ id: rp.id }));
+
+    const seen = new Set();
+    const combined = [];
+    [...onRoster, ...removed].forEach(p => {
+        if (seen.has(p.id)) return;
+        seen.add(p.id);
+        combined.push(p);
+    });
+    return combined;
+}
+
+function removePlayerFromTeamDuringGame(playerId) {
+    if (!AppState.viewingTeamsFromGame || !AppState.currentGame || !AppState.currentTeams) {
+        return false;
+    }
+
+    let teamSide = null;
+    if (AppState.currentTeams.blackTeam.some(p => p.id === playerId)) {
+        teamSide = 'black';
+    } else if (AppState.currentTeams.whiteTeam.some(p => p.id === playerId)) {
+        teamSide = 'white';
+    }
+    if (!teamSide) return false;
+
+    const teamKey = teamSide === 'black' ? 'blackTeam' : 'whiteTeam';
+    if (AppState.currentTeams[teamKey].length <= 1) {
+        alert('A team needs at least one player.');
+        return false;
+    }
+
+    const player = AppState.players.find(p => p.id === playerId);
+    const playerName = player ? player.name : 'this player';
+    if (!confirm(`Remove ${playerName} from this game?`)) {
+        return false;
+    }
+
+    const ownTeamScore = teamSide === 'black'
+        ? AppState.currentGame.blackScore
+        : AppState.currentGame.whiteScore;
+    // Win credit if they stayed through own team's 2nd goal (late joiners still excluded at endGame)
+    const winCredit = ownTeamScore >= 2;
+    const leftAtGoalCount = AppState.currentGame.goals.length;
+
+    if (!AppState.currentGame.removedPlayers) {
+        AppState.currentGame.removedPlayers = [];
+    }
+    if (!AppState.currentGame.playerLeftAtGoalCount) {
+        AppState.currentGame.playerLeftAtGoalCount = {};
+    }
+
+    AppState.currentGame.removedPlayers.push({
+        id: playerId,
+        team: teamSide,
+        winCredit,
+        leftAtGoalCount
+    });
+    AppState.currentGame.playerLeftAtGoalCount[playerId] = leftAtGoalCount;
+
+    AppState.currentTeams.blackTeam = AppState.currentTeams.blackTeam.filter(p => p.id !== playerId);
+    AppState.currentTeams.whiteTeam = AppState.currentTeams.whiteTeam.filter(p => p.id !== playerId);
+
+    if (AppState.currentStartingLineup) {
+        AppState.currentStartingLineup.blackTeam = (AppState.currentStartingLineup.blackTeam || [])
+            .filter(id => id !== playerId);
+        AppState.currentStartingLineup.whiteTeam = (AppState.currentStartingLineup.whiteTeam || [])
+            .filter(id => id !== playerId);
+    }
+
+    saveSession();
+    updateStandings();
+    renderTeamDisplay(AppState.currentTeams);
+    return true;
 }
 
 function addPlayerToTeamDuringGame(teamSide, playerId) {
@@ -2173,6 +2433,15 @@ function addPlayerToTeamDuringGame(teamSide, playerId) {
 
     AppState.currentTeams[teamKey].push({ id: player.id, name: player.name });
 
+    // If they left earlier this game and are rejoining, clear leave records
+    if (AppState.currentGame.playerLeftAtGoalCount) {
+        delete AppState.currentGame.playerLeftAtGoalCount[player.id];
+    }
+    if (Array.isArray(AppState.currentGame.removedPlayers)) {
+        AppState.currentGame.removedPlayers = AppState.currentGame.removedPlayers
+            .filter(rp => rp.id !== player.id);
+    }
+
     if (!AppState.currentGame.lateJoinerIds) {
         AppState.currentGame.lateJoinerIds = [];
     }
@@ -2184,6 +2453,7 @@ function addPlayerToTeamDuringGame(teamSide, playerId) {
     const ownTeamScore = teamSide === 'black'
         ? AppState.currentGame.blackScore
         : AppState.currentGame.whiteScore;
+    AppState.currentGame.lateJoinerIds = AppState.currentGame.lateJoinerIds.filter(id => id !== player.id);
     if (ownTeamScore > 0) {
         AppState.currentGame.lateJoinerIds.push(player.id);
     }
@@ -2244,17 +2514,40 @@ function handleAddPlayerDuringGame(teamSide) {
 function toggleTeamAddPlayerMode() {
     if (!AppState.viewingTeamsFromGame || !AppState.currentGame) return;
     AppState.teamAddPlayerMode = !AppState.teamAddPlayerMode;
+    if (AppState.teamAddPlayerMode) {
+        AppState.teamRemovePlayerMode = false;
+    }
     if (AppState.currentTeams) {
         renderTeamDisplay(AppState.currentTeams);
     }
-    updateTeamSelectionFooterAddPlayerButton();
+    updateTeamSelectionFooterPlayerButtons();
 }
 
-function updateTeamSelectionFooterAddPlayerButton() {
+function toggleTeamRemovePlayerMode() {
+    if (!AppState.viewingTeamsFromGame || !AppState.currentGame) return;
+    AppState.teamRemovePlayerMode = !AppState.teamRemovePlayerMode;
+    if (AppState.teamRemovePlayerMode) {
+        AppState.teamAddPlayerMode = false;
+    }
+    if (AppState.currentTeams) {
+        renderTeamDisplay(AppState.currentTeams);
+    }
+    updateTeamSelectionFooterPlayerButtons();
+}
+
+function updateTeamSelectionFooterPlayerButtons() {
     const addPlayerDuringGameBtn = document.getElementById('add-player-during-game-toggle-btn');
     if (addPlayerDuringGameBtn && AppState.viewingTeamsFromGame && AppState.currentGame) {
         addPlayerDuringGameBtn.textContent = AppState.teamAddPlayerMode ? 'Done' : 'Add Player';
     }
+    const removePlayerDuringGameBtn = document.getElementById('remove-player-during-game-toggle-btn');
+    if (removePlayerDuringGameBtn && AppState.viewingTeamsFromGame && AppState.currentGame) {
+        removePlayerDuringGameBtn.textContent = AppState.teamRemovePlayerMode ? 'Done' : 'Remove Player';
+    }
+}
+
+function updateTeamSelectionFooterAddPlayerButton() {
+    updateTeamSelectionFooterPlayerButtons();
 }
 
 function playRematch() {
@@ -4256,6 +4549,7 @@ function setupEventListeners() {
             clearStartGameCountdown();
             AppState.viewingTeamsFromGame = false;
             AppState.teamAddPlayerMode = false;
+            AppState.teamRemovePlayerMode = false;
             showScreen('game-progress');
         });
     }
@@ -4264,6 +4558,13 @@ function setupEventListeners() {
     if (addPlayerDuringGameToggleBtn) {
         addPlayerDuringGameToggleBtn.addEventListener('click', () => {
             toggleTeamAddPlayerMode();
+        });
+    }
+
+    const removePlayerDuringGameToggleBtn = document.getElementById('remove-player-during-game-toggle-btn');
+    if (removePlayerDuringGameToggleBtn) {
+        removePlayerDuringGameToggleBtn.addEventListener('click', () => {
+            toggleTeamRemovePlayerMode();
         });
     }
     
@@ -4296,6 +4597,10 @@ function setupEventListeners() {
         if (e.target.classList.contains('add-player-during-game-btn')) {
             const teamSide = e.target.getAttribute('data-team-side');
             if (teamSide) handleAddPlayerDuringGame(teamSide);
+        }
+        if (e.target.classList.contains('remove-during-game-btn')) {
+            const playerId = e.target.getAttribute('data-player-id');
+            if (playerId) removePlayerFromTeamDuringGame(playerId);
         }
     });
 
@@ -4353,6 +4658,7 @@ function setupEventListeners() {
         viewTeamsBtn.addEventListener('click', () => {
             AppState.viewingTeamsFromGame = true;
             AppState.teamAddPlayerMode = false;
+            AppState.teamRemovePlayerMode = false;
             showScreen('team-selection');
         });
     }

@@ -539,6 +539,15 @@ body {
     margin-bottom: 20px;
 }
 
+.teams-container.team-shuffle-active .team-player-name {
+    animation: slot-flicker 0.1s steps(1) infinite;
+}
+
+@keyframes slot-flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
 .team-section {
     flex: 1;
     padding: 30px;
@@ -706,6 +715,32 @@ body {
 }
 
 .remove-from-teams-btn:active {
+    background-color: #a02020;
+}
+
+.remove-during-game-btn {
+    min-width: 60px;
+    height: 40px;
+    font-size: 10px;
+    font-weight: bold;
+    background-color: #e04040;
+    color: #fff;
+    border: 2px solid #404040;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+    padding: 0 6px;
+    flex-shrink: 0;
+}
+
+.remove-during-game-btn:hover {
+    background-color: #c03030;
+}
+
+.remove-during-game-btn:active {
     background-color: #a02020;
 }
 

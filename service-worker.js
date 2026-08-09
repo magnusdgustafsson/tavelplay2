@@ -1,4 +1,4 @@
-const CACHE_NAME = 'floorball-tracker-v4';
+const CACHE_NAME = 'floorball-tracker-v6';
 const urlsToCache = [
   '/',
   '/index.html',
