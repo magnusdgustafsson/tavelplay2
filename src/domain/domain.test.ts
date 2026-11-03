@@ -6,6 +6,8 @@ import {
   computeGoalkeeperStats,
   computePlayerStats,
   decisiveGoalIndex,
+  isMaxScoreReached,
+  isPlayingOnForTwo,
   sortedStandings,
   winsByColor,
 } from './stats';
@@ -215,5 +217,36 @@ describe('teams', () => {
     expect(isPlusMinusFair(true, 4, 9)).toBe(false);
     expect(isPlusMinusFair(true, 6, 12)).toBe(false);
     expect(isPlusMinusFair(false, 4, 8)).toBe(false);
+  });
+});
+
+describe('win margin two goals', () => {
+  const settings = { ...DEFAULT_SETTINGS, maxScoreEnabled: true, maxScore: 3, winByTwoEnabled: true };
+  const fresh = () => createGame({ left: ['A'], right: ['B'], leftGkId: null, rightGkId: null }, settings, false);
+
+  it('goes on at max–(max-1) and locks once a team leads by two', () => {
+    const g = fresh();
+    for (const side of ['left', 'right', 'left', 'right', 'left'] as Side[]) addGoal(g, side, side === 'left' ? 'A' : 'B', null);
+    expect(isMaxScoreReached(g)).toBe(false); // 3–2
+    expect(isPlayingOnForTwo(g)).toBe(true);
+    expect(addGoal(g, 'right', 'B', null)).toBe(true); // 3–3
+    expect(addGoal(g, 'left', 'A', null)).toBe(true); // 4–3
+    expect(isMaxScoreReached(g)).toBe(false);
+    expect(addGoal(g, 'left', 'A', null)).toBe(true); // 5–3
+    expect(isMaxScoreReached(g)).toBe(true);
+    expect(addGoal(g, 'right', 'B', null)).toBe(false);
+    expect(decisiveGoalIndex(g)).toBe(7);
+  });
+
+  it('a clear lead at max ends it as usual', () => {
+    const g = fresh();
+    for (let i = 0; i < 3; i++) addGoal(g, 'left', 'A', null);
+    expect(isMaxScoreReached(g)).toBe(true);
+  });
+
+  it('does nothing without max score', () => {
+    const g = createGame({ left: ['A'], right: ['B'], leftGkId: null, rightGkId: null }, { ...settings, maxScoreEnabled: false }, false);
+    expect(g.winByTwo).toBe(false);
+    expect(g.maxScore).toBeNull();
   });
 });

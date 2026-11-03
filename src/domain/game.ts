@@ -23,6 +23,7 @@ export function createGame(teams: Teams, settings: Settings, plusMinus: boolean)
     },
     goals: [],
     maxScore: settings.maxScoreEnabled ? settings.maxScore : null,
+    winByTwo: settings.maxScoreEnabled && settings.winByTwoEnabled,
     plusMinus,
     joinedAtGoal,
     leftAtGoal: {},

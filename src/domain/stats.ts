@@ -25,7 +25,16 @@ export function winnerOf(score: Score): Side | null {
 export function isMaxScoreReached(game: Game): boolean {
   if (game.maxScore === null) return false;
   const s = gameScore(game);
-  return s.left >= game.maxScore || s.right >= game.maxScore;
+  const reached = s.left >= game.maxScore || s.right >= game.maxScore;
+  if (!game.winByTwo) return reached;
+  return reached && Math.abs(s.left - s.right) >= 2;
+}
+
+/** Max score reached but nobody leads by two yet → keep playing. */
+export function isPlayingOnForTwo(game: Game): boolean {
+  if (game.maxScore === null || !game.winByTwo) return false;
+  const s = gameScore(game);
+  return (s.left >= game.maxScore || s.right >= game.maxScore) && Math.abs(s.left - s.right) < 2;
 }
 
 /**
@@ -34,7 +43,7 @@ export function isMaxScoreReached(game: Game): boolean {
  * 2. Otherwise: the first goal that gives the eventual winner a 2-goal lead
  *    that the loser never catches up with afterwards.
  */
-export function decisiveGoalIndex(game: Pick<Game, 'goals' | 'maxScore'>): number | null {
+export function decisiveGoalIndex(game: Pick<Game, 'goals' | 'maxScore' | 'winByTwo'>): number | null {
   const goals = game.goals;
   if (goals.length === 0) return null;
   const final = gameScore(game);
@@ -42,7 +51,7 @@ export function decisiveGoalIndex(game: Pick<Game, 'goals' | 'maxScore'>): numbe
   if (!winner) return null;
   const loser = otherSide(winner);
 
-  if (game.maxScore !== null) {
+  if (game.maxScore !== null && !game.winByTwo) {
     if (final[winner] === game.maxScore && final[loser] === game.maxScore - 1) {
       return goals.length - 1;
     }

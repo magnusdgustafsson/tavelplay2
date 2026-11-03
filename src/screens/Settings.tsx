@@ -11,22 +11,30 @@ function Toggle({
   hint,
   checked,
   onChange,
+  disabled,
   children,
 }: {
   label: string;
   hint?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
   children?: ReactNode;
 }) {
   return (
-    <div className="setting">
+    <div className={`setting${disabled ? ' disabled' : ''}`}>
       <label className="setting-row">
         <span className="setting-label">
           {label}
           {hint && <div className="setting-hint">{hint}</div>}
         </span>
-        <input type="checkbox" className="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <input
+          type="checkbox"
+          className="switch"
+          checked={checked && !disabled}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.checked)}
+        />
       </label>
       {checked && children}
     </div>
@@ -181,6 +189,18 @@ export function Settings() {
               </select>
             </div>
           </Toggle>
+
+          <Toggle
+            label="Win margin two goals"
+            hint={
+              s.maxScoreEnabled
+                ? `At ${s.maxScore}–${s.maxScore - 1} the game goes on until a team leads by two`
+                : 'Turn on Max score to use this'
+            }
+            checked={s.winByTwoEnabled}
+            disabled={!s.maxScoreEnabled}
+            onChange={(v) => update({ winByTwoEnabled: v })}
+          />
 
           <Toggle
             label="Pig award"

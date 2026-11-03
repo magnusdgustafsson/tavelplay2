@@ -73,6 +73,8 @@ export interface Game {
   goals: Goal[];
   /** Max score that applied to this game, or null if unlimited. */
   maxScore: number | null;
+  /** With a max score: the winner must also lead by two goals. */
+  winByTwo?: boolean;
   plusMinus: boolean;
   /** playerId → goal index when they joined (0 = from the start). */
   joinedAtGoal: Record<string, number>;
@@ -87,6 +89,7 @@ export interface Settings {
   assistsEnabled: boolean;
   maxScoreEnabled: boolean;
   maxScore: number;
+  winByTwoEnabled: boolean;
   pigAwardEnabled: boolean;
   randomTeamsEnabled: boolean;
   startingLineupEnabled: boolean;
@@ -100,6 +103,7 @@ export const DEFAULT_SETTINGS: Settings = {
   assistsEnabled: true,
   maxScoreEnabled: false,
   maxScore: 5,
+  winByTwoEnabled: false,
   pigAwardEnabled: true,
   randomTeamsEnabled: true,
   startingLineupEnabled: false,
