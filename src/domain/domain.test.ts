@@ -250,3 +250,29 @@ describe('win margin two goals', () => {
     expect(g.maxScore).toBeNull();
   });
 });
+
+describe('win by two – cap at 10 goals', () => {
+  const settings = { ...DEFAULT_SETTINGS, maxScoreEnabled: true, maxScore: 5, winByTwoEnabled: true };
+  it('at 9–9 the next goal wins (10–9) and is decisive', () => {
+    const g = createGame({ left: ['A'], right: ['B'], leftGkId: null, rightGkId: null }, settings, false);
+    for (let i = 0; i < 9; i++) {
+      addGoal(g, 'left', 'A', null);
+      addGoal(g, 'right', 'B', null);
+    }
+    expect(isPlayingOnForTwo(g)).toBe(true); // 9–9
+    addGoal(g, 'right', 'B', null); // 9–10
+    expect(isMaxScoreReached(g)).toBe(true);
+    expect(isPlayingOnForTwo(g)).toBe(false);
+    expect(addGoal(g, 'left', 'A', null)).toBe(false);
+    expect(decisiveGoalIndex(g)).toBe(18);
+  });
+  it('still plays on at 9–8', () => {
+    const g = createGame({ left: ['A'], right: ['B'], leftGkId: null, rightGkId: null }, settings, false);
+    for (let i = 0; i < 8; i++) {
+      addGoal(g, 'left', 'A', null);
+      addGoal(g, 'right', 'B', null);
+    }
+    addGoal(g, 'left', 'A', null); // 9–8
+    expect(isMaxScoreReached(g)).toBe(false);
+  });
+});

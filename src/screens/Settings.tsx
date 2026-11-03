@@ -4,6 +4,7 @@ import { TEAM_COLORS, teamLabel } from '../domain/types';
 import type { TeamColor } from '../domain/types';
 import { useStore } from '../state/store';
 import { THEMES } from '../themes';
+import { WIN_BY_TWO_CAP } from '../domain/stats';
 import { confirmDialog } from '../ui/dialogs';
 
 function Toggle({
@@ -193,9 +194,11 @@ export function Settings() {
           <Toggle
             label="Win margin two goals"
             hint={
-              s.maxScoreEnabled
-                ? `At ${s.maxScore}–${s.maxScore - 1} the game goes on until a team leads by two`
-                : 'Turn on Max score to use this'
+              !s.maxScoreEnabled
+                ? 'Turn on Max score to use this'
+                : s.maxScore >= WIN_BY_TWO_CAP
+                  ? `No effect with max score ${WIN_BY_TWO_CAP} – first to ${WIN_BY_TWO_CAP} always wins`
+                  : `At ${s.maxScore}–${s.maxScore - 1} play on until a team leads by two – or reaches ${WIN_BY_TWO_CAP} goals`
             }
             checked={s.winByTwoEnabled}
             disabled={!s.maxScoreEnabled}

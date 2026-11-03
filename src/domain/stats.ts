@@ -22,24 +22,28 @@ export function winnerOf(score: Score): Side | null {
   return null;
 }
 
+/** With "win by two", the first team to this many goals wins anyway (e.g. 10–9). */
+export const WIN_BY_TWO_CAP = 10;
+
 export function isMaxScoreReached(game: Game): boolean {
   if (game.maxScore === null) return false;
   const s = gameScore(game);
-  const reached = s.left >= game.maxScore || s.right >= game.maxScore;
-  if (!game.winByTwo) return reached;
-  return reached && Math.abs(s.left - s.right) >= 2;
+  const top = Math.max(s.left, s.right);
+  if (top < game.maxScore) return false;
+  if (!game.winByTwo) return true;
+  return Math.abs(s.left - s.right) >= 2 || top >= WIN_BY_TWO_CAP;
 }
 
-/** Max score reached but nobody leads by two yet → keep playing. */
+/** Max score reached but nobody leads by two yet (and below the cap) → keep playing. */
 export function isPlayingOnForTwo(game: Game): boolean {
   if (game.maxScore === null || !game.winByTwo) return false;
-  const s = gameScore(game);
-  return (s.left >= game.maxScore || s.right >= game.maxScore) && Math.abs(s.left - s.right) < 2;
+  return Math.max(...Object.values(gameScore(game))) >= game.maxScore && !isMaxScoreReached(game);
 }
 
 /**
  * Index of the decisive goal, or null.
- * 1. With max score: a final goal that breaks a (max-1)–(max-1) tie.
+ * 1. With max score: a final goal that breaks a (max-1)–(max-1) tie
+ *    (with "win by two": a goal that reaches the cap from (cap-1)–(cap-1)).
  * 2. Otherwise: the first goal that gives the eventual winner a 2-goal lead
  *    that the loser never catches up with afterwards.
  */
@@ -51,8 +55,9 @@ export function decisiveGoalIndex(game: Pick<Game, 'goals' | 'maxScore' | 'winBy
   if (!winner) return null;
   const loser = otherSide(winner);
 
-  if (game.maxScore !== null && !game.winByTwo) {
-    if (final[winner] === game.maxScore && final[loser] === game.maxScore - 1) {
+  if (game.maxScore !== null) {
+    const limit = game.winByTwo ? WIN_BY_TWO_CAP : game.maxScore;
+    if (final[winner] === limit && final[loser] === limit - 1) {
       return goals.length - 1;
     }
   }

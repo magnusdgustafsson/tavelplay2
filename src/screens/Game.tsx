@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Side } from '../domain/types';
 import { teamLabel } from '../domain/types';
-import { gameScore, isMaxScoreReached, isPlayingOnForTwo } from '../domain/stats';
+import { WIN_BY_TWO_CAP, gameScore, isMaxScoreReached, isPlayingOnForTwo } from '../domain/stats';
 import { playerName, useStore } from '../state/store';
 import { confirmDialog } from '../ui/dialogs';
 import { useWakeLock } from '../ui/common';
@@ -110,7 +110,7 @@ export function Game() {
         </div>
       </div>
       {locked && <p className="max-score-note">Max score reached – end the game when you're ready.</p>}
-      {isPlayingOnForTwo(game) && <p className="max-score-note">Win by two – play on!</p>}
+      {isPlayingOnForTwo(game) && <p className="max-score-note">Win by two – play on! (first to {WIN_BY_TWO_CAP} wins)</p>}
       <div className="goal-buttons">
         {(['left', 'right'] as const).map((side) => (
           <button
