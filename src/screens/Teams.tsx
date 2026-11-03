@@ -1,57 +1,54 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Side, TeamColor, Teams as TeamsT } from '../domain/types';
 import { teamLabel } from '../domain/types';
-import { shuffle } from '../domain/teams';
 import { playerName, useStore } from '../state/store';
 import { addPlayerMessage } from './Entries';
 import { alertDialog, chooseDialog, confirmDialog, showToast } from '../ui/dialogs';
 import { useCountdown } from '../ui/common';
+import { SCENE_MS, ShuffleScene } from '../ui/ShuffleScene';
 
-const SHUFFLE_MS = 2000;
 const START_COUNTDOWN = 60;
 const BACK_TO_GAME_COUNTDOWN = 30;
+const FADE_MS = 700;
 
 // Nonce 0 = nothing shuffled yet (e.g. after a reload) → no animation.
 let lastAnimatedNonce = 0;
 
-/** Shuffle animation: random previews that slow down, then the real teams. */
-function useShuffleAnimation(teams: TeamsT | null, nonce: number, cancelKey: number) {
-  const [preview, setPreview] = useState<TeamsT | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
-  // Any manual change to the teams (e.g. rematch) stops the animation.
+type ShufflePhase = 'scene' | 'reveal' | null;
+
+/**
+ * 'scene': the stick-throwing animation plays and names are hidden.
+ * 'reveal': sticks fade out and the names pop in.
+ * Any manual change to the teams (e.g. rematch) skips straight to the end.
+ */
+function useShufflePhase(active: boolean, nonce: number, cancelKey: number): ShufflePhase {
+  const [phase, setPhase] = useState<ShufflePhase>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clear = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
   const firstCancel = useRef(true);
   useEffect(() => {
     if (firstCancel.current) {
       firstCancel.current = false;
       return;
     }
-    clearTimeout(timer.current);
-    setPreview(null);
+    clear();
+    setPhase(null);
   }, [cancelKey]);
   useEffect(() => {
-    if (!teams || nonce === lastAnimatedNonce) return;
+    if (!active || nonce === lastAnimatedNonce) return;
     lastAnimatedNonce = nonce;
-    const all = [...teams.left, ...teams.right];
-    const leftCount = teams.left.length;
-    const start = Date.now();
-    const frame = () => {
-      const elapsed = Date.now() - start;
-      if (elapsed >= SHUFFLE_MS) {
-        setPreview(null);
-        return;
-      }
-      const s = shuffle(all);
-      setPreview({ ...teams, left: s.slice(0, leftCount), right: s.slice(leftCount) });
-      const p = elapsed / SHUFFLE_MS;
-      timer.current = setTimeout(frame, Math.round(50 + p * p * 320));
-    };
-    frame();
+    setPhase('scene');
+    timers.current.push(setTimeout(() => setPhase('reveal'), SCENE_MS));
+    timers.current.push(setTimeout(() => setPhase(null), SCENE_MS + FADE_MS));
     return () => {
-      clearTimeout(timer.current);
-      setPreview(null);
+      clear();
+      setPhase(null);
     };
   }, [nonce]);
-  return preview;
+  return phase;
 }
 
 function AddDuringGame({ side, onAdded }: { side: Side; onAdded: () => void }) {
@@ -122,6 +119,7 @@ function TeamCard({
   addMode,
   removeMode,
   shuffling,
+  reveal,
   onAction,
 }: {
   side: Side;
@@ -133,6 +131,7 @@ function TeamCard({
   addMode: boolean;
   removeMode: boolean;
   shuffling: boolean;
+  reveal: boolean;
   onAction: () => void;
 }) {
   const players = useStore((s) => s.players);
@@ -185,8 +184,12 @@ function TeamCard({
     <section className="team-card" data-team={color}>
       <h2>{teamLabel(color)} TEAM</h2>
       <div className="team-list" style={{ ['--rows' as string]: Math.max(rows, 5) }}>
-        {ids.map((id) => (
-          <div className="team-row" key={id}>
+        {(shuffling ? [] : ids).map((id, index) => (
+          <div
+            className={`team-row${reveal ? ' reveal' : ''}`}
+            key={id}
+            style={reveal ? { ['--i' as string]: index } : undefined}
+          >
             {badge(id)}
             <span className="name">{playerName(players, id)}</span>
             {editMode && !shuffling && (
@@ -253,8 +256,8 @@ export function Teams() {
   const [actionKey, setActionKey] = useState(0);
   const bump = () => setActionKey((k) => k + 1);
 
-  const preview = useShuffleAnimation(inGame ? null : teams, shuffleNonce, editNonce);
-  const shuffling = !!preview;
+  const phase = useShufflePhase(!inGame && !!teams, shuffleNonce, editNonce);
+  const shuffling = phase === 'scene';
 
   const startLeft = useCountdown(START_COUNTDOWN, !inGame && !shuffling, `${editNonce}-${actionKey}`, () => {
     if (useStore.getState().screen === 'teams') startGame();
@@ -263,7 +266,7 @@ export function Teams() {
     if (useStore.getState().screen === 'game-teams') setScreen('game');
   });
 
-  const shown: TeamsT | null = inGame && game ? game.teams : (preview ?? teams);
+  const shown: TeamsT | null = inGame && game ? game.teams : teams;
   const colors = inGame && game ? game.colors : { left: settings.leftColor, right: settings.rightColor };
 
   if (!shown) return null;
@@ -271,7 +274,8 @@ export function Teams() {
   return (
     <div className="screen">
       <h1 className="title">{inGame ? 'Teams' : 'Team Selection'}</h1>
-      <div className={`teams${shuffling ? ' shuffling' : ''}`}>
+      <div className="teams">
+        {phase && <ShuffleScene fading={phase === 'reveal'} />}
         {(['left', 'right'] as const).map((side) => (
           <TeamCard
             key={side}
@@ -284,6 +288,7 @@ export function Teams() {
             addMode={addMode}
             removeMode={removeMode}
             shuffling={shuffling}
+            reveal={phase === 'reveal'}
             onAction={bump}
           />
         ))}

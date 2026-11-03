@@ -89,3 +89,13 @@
   --score-color: var(--team-bg);
   --score-label-color: var(--team-bg);
 }
+
+[data-theme='c64'] .shuffle-scene {
+  --ss-shirt: #00ffff;
+  --ss-pants: #202020;
+  --ss-outline: #000;
+}
+
+[data-theme='c64'] .shuffle-scene svg {
+  shape-rendering: crispEdges;
+}

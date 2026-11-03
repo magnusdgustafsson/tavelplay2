@@ -114,3 +114,13 @@
   --goal-team-shadow: 0 0 26px color-mix(in srgb, var(--team-accent) 30%, transparent),
     inset 0 0 20px color-mix(in srgb, var(--team-accent) 12%, transparent);
 }
+
+[data-theme='arena'] .shuffle-scene {
+  --ss-shirt: #ffb000;
+  --ss-pants: #2a3140;
+  --ss-outline: #000;
+}
+
+[data-theme='arena'] .shuffle-scene svg {
+  filter: drop-shadow(0 0 6px rgba(255, 176, 0, 0.45));
+}

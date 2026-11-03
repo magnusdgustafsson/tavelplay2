@@ -132,3 +132,13 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+[data-theme='light'] .shuffle-scene {
+  --ss-shirt: #2563eb;
+  --ss-pants: #1f2937;
+  --ss-outline: rgba(15, 23, 42, 0.5);
+}
+
+[data-theme='light'] .shuffle-scene svg {
+  filter: drop-shadow(0 6px 8px rgba(15, 23, 42, 0.18));
+}
