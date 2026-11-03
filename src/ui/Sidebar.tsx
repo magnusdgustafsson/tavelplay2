@@ -29,7 +29,7 @@ export function Sidebar() {
         ) : players.length === 0 ? (
           <p className="empty">No players yet</p>
         ) : (
-          <table className="table standings">
+          <table className="table standings" style={{ ['--rows' as string]: Math.max(players.length, 8) }}>
             <thead>
               <tr>
                 <th>Player</th>
@@ -37,21 +37,28 @@ export function Sidebar() {
                 <th className="num">Pts</th>
                 <th className="num">G</th>
                 <th className="num">A</th>
-                <th className="num" title="Hattricks">🎩</th>
                 {plusMinus && <th className="num">+/−</th>}
               </tr>
             </thead>
             <tbody>
               {sortedStandings(players, stats).map(({ player, stats: s }) => (
                 <tr key={player.id} style={player.active ? undefined : { opacity: 0.55 }}>
-                  <td className="name-cell">{player.name}</td>
+                  <td className="name-cell">
+                    <span className="name-wrap">
+                    <span className="n">{player.name}</span>
+                    {s.hattricks > 0 && (
+                      <span className="hats" title={`${s.hattricks} hattrick${s.hattricks > 1 ? 's' : ''}`}>
+                        {s.hattricks > 2 ? `🎩×${s.hattricks}` : '🎩'.repeat(s.hattricks)}
+                      </span>
+                    )}
+                    </span>
+                  </td>
                   <td className="num">
                     {s.gamesWon}/{s.gamesPlayed}
                   </td>
                   <td className="num">{s.points}</td>
                   <td className="num">{s.goals}</td>
                   <td className="num">{s.assists}</td>
-                  <td className="num">{s.hattricks > 0 ? (s.hattricks > 3 ? `🎩×${s.hattricks}` : '🎩'.repeat(s.hattricks)) : ''}</td>
                   {plusMinus && <td className="num">{s.plusMinus > 0 ? `+${s.plusMinus}` : s.plusMinus}</td>}
                 </tr>
               ))}

@@ -63,9 +63,9 @@ input {
 }
 
 .sidebar {
-  width: 25%;
-  min-width: 250px;
-  max-width: 340px;
+  width: 31%;
+  min-width: 300px;
+  max-width: 400px;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
   border-right: var(--border-width) solid var(--border-strong);
@@ -88,6 +88,7 @@ input {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  container-type: size;
 }
 
 .sidebar-logo {
@@ -98,7 +99,9 @@ input {
 .sidebar-logo img {
   display: block;
   width: 100%;
-  height: auto;
+  max-height: 72px;
+  object-fit: contain;
+  object-position: left center;
   border-radius: var(--radius-sm);
 }
 
@@ -154,7 +157,7 @@ input {
   font-size: var(--button-size, 16px);
   text-transform: var(--button-transform, none);
   letter-spacing: var(--button-spacing, 0);
-  padding: 14px 24px;
+  padding: 14px 20px;
   min-height: 54px;
   border-radius: var(--radius);
   border: var(--border-width) solid var(--btn-border, var(--border-strong));
@@ -500,12 +503,56 @@ input {
 }
 
 .standings {
-  font-size: var(--standings-size, 15px);
+  /* As big as possible while every player still fits without scrolling. */
+  font-size: clamp(13px, calc(100cqh / (var(--rows) + 1) / 1.8), var(--standings-size, 19px));
+}
+
+.standings th {
+  font-size: 0.66em;
+}
+
+.standings .num {
+  padding-left: 0.24em;
+  padding-right: 0.24em;
+  border-left: 1px solid var(--table-line);
+}
+
+.standings th,
+.standings td {
+  padding: 0.22em 0.3em;
+  line-height: 1.2;
+}
+
+.standings td {
+  font-weight: 700;
 }
 
 .standings th:first-child,
 .standings td:first-child {
   padding-left: 8px;
+}
+
+.standings th:last-child,
+.standings td:last-child {
+  padding-right: 8px;
+}
+
+.standings .name-wrap {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.standings .name-wrap .n {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.standings .hats {
+  font-size: 0.75em;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 
 .stats-table {
