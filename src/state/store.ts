@@ -69,7 +69,10 @@ interface Actions {
   removeRecurring(id: string): void;
 
   goToTeamSelection(): void;
-  rematch(): void;
+  /** Previous lineup again, optionally with the teams changing ends. */
+  rematch(swap?: boolean): void;
+  /** From the game summary: same teams, swapped ends, straight to team selection. */
+  rematchSwapFromSummary(): void;
   swapSides(): void;
   movePlayer(id: string): void;
   removeFromTeams(id: string): void;
@@ -129,6 +132,22 @@ export const useStore = create<Store>()(
         const id = newId('p-');
         s.players.unshift({ id, name: trimmed, active: true });
         return { result: 'ok', id };
+      };
+
+      /** Players and colours change ends; goalkeepers stay in their goal. */
+      const swapDraft = (s: Data) => {
+        if (!s.teams) return;
+        [s.teams.left, s.teams.right] = [s.teams.right, s.teams.left];
+        if (s.starters) [s.starters.left, s.starters.right] = [s.starters.right, s.starters.left];
+        [s.settings.leftColor, s.settings.rightColor] = [s.settings.rightColor, s.settings.leftColor];
+      };
+
+      /** A rematch keeps each team in the colour it had in the last game. */
+      const restoreLastGameColors = (s: Data) => {
+        const last = s.games[s.games.length - 1];
+        if (!last) return;
+        s.settings.leftColor = last.colors.left;
+        s.settings.rightColor = last.colors.right;
       };
 
       const hasPlayed = (s: Data, id: string) =>
@@ -222,25 +241,38 @@ export const useStore = create<Store>()(
               : null;
             s.screen = 'teams';
           }),
-        rematch: () =>
+        rematch: (swap = false) =>
           set((s) => {
             if (!s.previousTeams) return;
             s.teams = reconcileTeams(
               JSON.parse(JSON.stringify(s.previousTeams)),
               activePlayers(s).map((p) => p.id),
             );
+            restoreLastGameColors(s);
             s.starters = s.settings.startingLineupEnabled
               ? pickStarters(s.teams, s.settings.startingLineupCount)
               : null;
+            if (swap) swapDraft(s);
             s.teamsEditNonce++;
+          }),
+        rematchSwapFromSummary: () =>
+          set((s) => {
+            const active = activePlayers(s).map((p) => p.id);
+            if (!s.teams || active.length < 2) return;
+            s.previousTeams = JSON.parse(JSON.stringify(s.teams));
+            s.teams = reconcileTeams(s.teams, active);
+            restoreLastGameColors(s);
+            s.starters = s.settings.startingLineupEnabled
+              ? pickStarters(s.teams, s.settings.startingLineupCount)
+              : null;
+            swapDraft(s);
+            s.teamsEditNonce++;
+            s.screen = 'teams';
           }),
         swapSides: () =>
           set((s) => {
             if (!s.teams) return;
-            // Players and colours swap; goalkeepers stay in their goal.
-            [s.teams.left, s.teams.right] = [s.teams.right, s.teams.left];
-            if (s.starters) [s.starters.left, s.starters.right] = [s.starters.right, s.starters.left];
-            [s.settings.leftColor, s.settings.rightColor] = [s.settings.rightColor, s.settings.leftColor];
+            swapDraft(s);
             s.teamsEditNonce++;
           }),
         movePlayer: (id) =>

@@ -34,7 +34,7 @@ export function GoalTimeline({ game }: { game: Game }) {
 
 export function Summary() {
   const games = useStore((s) => s.games);
-  const { setScreen, goToTeamSelection, finishSession } = useStore.getState();
+  const { setScreen, goToTeamSelection, finishSession, rematchSwapFromSummary } = useStore.getState();
   const game = games[games.length - 1];
   if (!game) return null;
   const score = gameScore(game);
@@ -67,6 +67,9 @@ export function Summary() {
         </button>
         <button className="btn btn-secondary" onClick={() => setScreen('history')}>
           View/Edit Games
+        </button>
+        <button className="btn btn-secondary" onClick={rematchSwapFromSummary} title="Same teams, swapped ends">
+          Rematch + Swap ⇄
         </button>
         <button className="btn btn-primary" onClick={goToTeamSelection}>
           Next Game

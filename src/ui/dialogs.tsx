@@ -8,7 +8,9 @@ interface DialogRequest {
   confirmLabel?: string;
   cancelLabel?: string | null;
   danger?: boolean;
-  resolve: (ok: boolean) => void;
+  /** Extra buttons shown before the confirm button; resolve with their value. */
+  choices?: { label: string; value: string }[];
+  resolve: (value: string | null) => void;
 }
 
 interface DialogState {
@@ -24,7 +26,26 @@ export function confirmDialog(
 ): Promise<boolean> {
   return new Promise((resolve) => {
     useDialogs.setState({
-      dialog: { message, ...opts, cancelLabel: opts.cancelLabel ?? 'Cancel', resolve },
+      dialog: { message, ...opts, cancelLabel: opts.cancelLabel ?? 'Cancel', resolve: (v) => resolve(v !== null) },
+    });
+  });
+}
+
+/** Ask the user to pick one of several actions. Resolves null on cancel. */
+export function chooseDialog(
+  message: string,
+  opts: { title?: string; choices: { label: string; value: string }[]; primary: { label: string; value: string } },
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    useDialogs.setState({
+      dialog: {
+        message,
+        title: opts.title,
+        choices: opts.choices,
+        confirmLabel: opts.primary.label,
+        cancelLabel: 'Cancel',
+        resolve: (v) => resolve(v === 'ok' ? opts.primary.value : v),
+      },
     });
   });
 }
@@ -47,16 +68,16 @@ export function showToast(message: string) {
 export function DialogHost() {
   const { dialog, toast } = useDialogs();
 
-  const close = (ok: boolean) => {
-    dialog?.resolve(ok);
+  const close = (value: string | null) => {
+    dialog?.resolve(value);
     useDialogs.setState({ dialog: null });
   };
 
   useEffect(() => {
     if (!dialog) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close(false);
-      if (e.key === 'Enter') close(true);
+      if (e.key === 'Escape') close(null);
+      if (e.key === 'Enter') close('ok');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -65,7 +86,7 @@ export function DialogHost() {
   return (
     <>
       {dialog && (
-        <div className="overlay" style={{ zIndex: 150 }} onClick={() => dialog.cancelLabel && close(false)}>
+        <div className="overlay" style={{ zIndex: 150 }} onClick={() => dialog.cancelLabel && close(null)}>
           <div
             className="modal"
             role="alertdialog"
@@ -77,13 +98,18 @@ export function DialogHost() {
             <p className="modal-text">{dialog.message}</p>
             <div className="modal-footer">
               {dialog.cancelLabel && (
-                <button className="btn btn-secondary" onClick={() => close(false)}>
+                <button className="btn btn-secondary" onClick={() => close(null)}>
                   {dialog.cancelLabel}
                 </button>
               )}
+              {dialog.choices?.map((c) => (
+                <button key={c.value} className="btn btn-secondary" onClick={() => close(c.value)}>
+                  {c.label}
+                </button>
+              ))}
               <button
                 className={`btn ${dialog.danger ? 'btn-danger' : 'btn-primary'}`}
-                onClick={() => close(true)}
+                onClick={() => close('ok')}
                 autoFocus
               >
                 {dialog.confirmLabel ?? 'OK'}

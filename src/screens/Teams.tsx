@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Side, TeamColor, Teams as TeamsT } from '../domain/types';
 import { teamLabel } from '../domain/types';
 import { shuffle } from '../domain/teams';
 import { playerName, useStore } from '../state/store';
 import { addPlayerMessage } from './Entries';
-import { alertDialog, confirmDialog, showToast } from '../ui/dialogs';
+import { alertDialog, chooseDialog, confirmDialog, showToast } from '../ui/dialogs';
 import { useCountdown } from '../ui/common';
 
 const SHUFFLE_MS = 4000;
@@ -15,15 +15,25 @@ const BACK_TO_GAME_COUNTDOWN = 30;
 let lastAnimatedNonce = 0;
 
 /** Shuffle animation: random previews that slow down, then the real teams. */
-function useShuffleAnimation(teams: TeamsT | null, nonce: number) {
+function useShuffleAnimation(teams: TeamsT | null, nonce: number, cancelKey: number) {
   const [preview, setPreview] = useState<TeamsT | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  // Any manual change to the teams (e.g. rematch) stops the animation.
+  const firstCancel = useRef(true);
+  useEffect(() => {
+    if (firstCancel.current) {
+      firstCancel.current = false;
+      return;
+    }
+    clearTimeout(timer.current);
+    setPreview(null);
+  }, [cancelKey]);
   useEffect(() => {
     if (!teams || nonce === lastAnimatedNonce) return;
     lastAnimatedNonce = nonce;
     const all = [...teams.left, ...teams.right];
     const leftCount = teams.left.length;
     const start = Date.now();
-    let timer: ReturnType<typeof setTimeout>;
     const frame = () => {
       const elapsed = Date.now() - start;
       if (elapsed >= SHUFFLE_MS) {
@@ -33,11 +43,11 @@ function useShuffleAnimation(teams: TeamsT | null, nonce: number) {
       const s = shuffle(all);
       setPreview({ ...teams, left: s.slice(0, leftCount), right: s.slice(leftCount) });
       const p = elapsed / SHUFFLE_MS;
-      timer = setTimeout(frame, Math.round(50 + p * p * 320));
+      timer.current = setTimeout(frame, Math.round(50 + p * p * 320));
     };
     frame();
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer.current);
       setPreview(null);
     };
   }, [nonce]);
@@ -243,7 +253,7 @@ export function Teams() {
   const [actionKey, setActionKey] = useState(0);
   const bump = () => setActionKey((k) => k + 1);
 
-  const preview = useShuffleAnimation(inGame ? null : teams, shuffleNonce);
+  const preview = useShuffleAnimation(inGame ? null : teams, shuffleNonce, editNonce);
   const shuffling = !!preview;
 
   const startLeft = useCountdown(START_COUNTDOWN, !inGame && !shuffling, `${editNonce}-${actionKey}`, () => {
@@ -313,11 +323,13 @@ export function Teams() {
             {previousTeams && (
               <button
                 className="btn btn-secondary"
-                disabled={shuffling}
                 onClick={async () => {
-                  if (await confirmDialog('Change the teams back to the previous lineup?', { title: 'Rematch', confirmLabel: 'Rematch' })) {
-                    rematch();
-                  }
+                  const choice = await chooseDialog('Change the teams back to the previous lineup?', {
+                    title: 'Rematch',
+                    choices: [{ label: 'Rematch', value: 'same' }],
+                    primary: { label: 'Rematch + Swap Sides', value: 'swap' },
+                  });
+                  if (choice) rematch(choice === 'swap');
                 }}
               >
                 Rematch
