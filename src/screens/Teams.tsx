@@ -7,7 +7,7 @@ import { addPlayerMessage } from './Entries';
 import { alertDialog, chooseDialog, confirmDialog, showToast } from '../ui/dialogs';
 import { useCountdown } from '../ui/common';
 
-const SHUFFLE_MS = 4000;
+const SHUFFLE_MS = 2000;
 const START_COUNTDOWN = 60;
 const BACK_TO_GAME_COUNTDOWN = 30;
 
