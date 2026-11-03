@@ -39,7 +39,8 @@ const AppState = {
 // Recurring players are stored separately from the session so they
 // persist across resets of players/games.
 let RecurringPlayers = [];
-const RECURRING_PLAYERS_STORAGE_KEY = 'floorballRecurringPlayers';
+const SESSION_STORAGE_KEY = 'tavelplay2Session';
+const RECURRING_PLAYERS_STORAGE_KEY = 'tavelplay2RecurringPlayers';
 let recurringManageOpen = false;
 
 let teamSelectionCountdownInterval = null;
@@ -69,11 +70,11 @@ function saveSession() {
         sessionActive: AppState.sessionActive,
         settings: AppState.settings
     };
-    localStorage.setItem('floorballSession', JSON.stringify(sessionData));
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
 }
 
 function loadSession() {
-    const saved = localStorage.getItem('floorballSession');
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
     if (saved) {
         const data = JSON.parse(saved);
         AppState.players = data.players || [];
@@ -206,7 +207,7 @@ function resetSession() {
     AppState.settings.blackTeamName = 'BLACK TEAM';
     AppState.settings.whiteTeamName = 'WHITE TEAM';
     AppState.todaysStatsView = 'field';
-    localStorage.removeItem('floorballSession');
+    localStorage.removeItem(SESSION_STORAGE_KEY);
 }
 
 // Helper function to get team display name

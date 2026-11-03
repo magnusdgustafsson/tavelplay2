@@ -1,8 +1,9 @@
 {
-  "name": "TavelPlay",
-  "short_name": "TavelPlay",
+  "name": "TavelPlay 2",
+  "short_name": "TavelPlay 2",
   "description": "Track floorball game scores, goals, and player statistics",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
