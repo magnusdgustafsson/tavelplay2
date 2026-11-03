@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="defBadgeOuter" cx="30%" cy="25%" r="85%">
+      <stop offset="0" stop-color="#F0F4FF"/>
+      <stop offset="1" stop-color="#7A828C"/>
+    </radialGradient>
+    <radialGradient id="defBadgeInner" cx="35%" cy="30%" r="85%">
+      <stop offset="0" stop-color="#D0D6E0"/>
+      <stop offset="1" stop-color="#555B66"/>
+    </radialGradient>
+    <linearGradient id="defShield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F5F7FA"/>
+      <stop offset="1" stop-color="#A0A6B2"/>
+    </linearGradient>
+    <linearGradient id="defShieldEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#C0C6D0"/>
+    </linearGradient>
+    <pattern id="defDither" width="2" height="2" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="none"/>
+      <rect x="0" y="0" width="1" height="1" fill="#FFFFFF" opacity="0.10"/>
+      <rect x="1" y="1" width="1" height="1" fill="#FFFFFF" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <circle cx="16" cy="16" r="15" fill="url(#defBadgeOuter)" stroke="#1A1C22" stroke-width="2"/>
+  <circle cx="16" cy="16" r="12" fill="url(#defBadgeInner)" stroke="#1A1C22" stroke-width="1"/>
+  <circle cx="16" cy="16" r="12" fill="url(#defDither)"/>
+  <path d="M10 9
+           L22 9
+           L22 15
+           C22 19 19.5 21.5 16 23
+           C12.5 21.5 10 19 10 15
+           Z"
+        fill="url(#defShield)" stroke="#1A1C22" stroke-width="1" stroke-linejoin="miter"/>
+  <path d="M11 10
+           L21 10
+           L21 15
+           C21 18.3 19.1 20.4 16 21.8
+           C12.9 20.4 11 18.3 11 15
+           Z"
+        fill="url(#defShieldEdge)" opacity="0.85"/>
+  <text x="16" y="17"
+        text-anchor="middle"
+        font-family="Verdana, Arial, sans-serif"
+        font-size="8"
+        font-weight="900"
+        letter-spacing="0.5"
+        fill="#1A1C22">D</text>
+  <text x="16" y="17"
+        text-anchor="middle"
+        font-family="Verdana, Arial, sans-serif"
+        font-size="8"
+        font-weight="900"
+        letter-spacing="0.5"
+        fill="#FFFFFF" opacity="0.9">D</text>
+</svg>

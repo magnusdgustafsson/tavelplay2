@@ -1,0 +1,115 @@
+/* Arena – like the scoreboard in a sports hall: black, glowing digits. */
+[data-theme='arena'] {
+  --bg: #05070a;
+  --text: #eef1f6;
+  --text-muted: #8a93a3;
+  --title-color: #ffb000;
+  --title-shadow: 0 0 18px rgba(255, 176, 0, 0.45);
+  --accent: #ffb000;
+  --divider: #1d222b;
+
+  --sidebar-bg: #0b0e13;
+  --sidebar-text: #e8ebf1;
+  --sidebar-line: #1a1f27;
+
+  --surface: #11151c;
+  --surface-text: #eef1f6;
+  --surface-muted: #8a93a3;
+  --border-strong: #252b36;
+  --border-width: 2px;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-button: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-score: 'Orbitron', 'Oswald', sans-serif;
+  --font-names: 'Oswald', 'Arial Narrow', sans-serif;
+  --title-size: 32px;
+  --title-transform: uppercase;
+  --title-spacing: 0.08em;
+  --sidebar-title-size: 20px;
+  --team-title-size: 26px;
+  --h3-size: 18px;
+  --button-size: 16px;
+  --button-transform: uppercase;
+  --button-spacing: 0.04em;
+  --button-weight: 600;
+  --score-label-size: 28px;
+  --score-weight: 900;
+  --score-size: clamp(110px, 24vh, 220px);
+  --final-score-size: 100px;
+  --goal-btn-size: 32px;
+  --standings-size: 13px;
+  --team-name-max: 26px;
+
+  --primary-bg: #ffb000;
+  --primary-text: #0b0b0b;
+  --primary-border: #ffb000;
+  --primary-shadow: 0 0 22px rgba(255, 176, 0, 0.35);
+  --secondary-bg: #161b23;
+  --secondary-text: #e8ebf1;
+  --danger-bg: #b91c1c;
+  --danger-text: #ffffff;
+  --goal-btn-bg: #22c55e;
+  --goal-btn-text: #04130a;
+  --assist-btn-bg: #facc15;
+  --assist-btn-text: #1a1400;
+  --selected-ring: #ffffff;
+  --selected-glow: 0 0 18px rgba(255, 255, 255, 0.6);
+
+  --input-bg: #0b0e13;
+  --input-text: #eef1f6;
+  --focus: #ffb000;
+  --switch-off: #252b36;
+  --switch-on: #ffb000;
+  --switch-knob: #f4f5f7;
+
+  --table-head-bg: #161b23;
+  --table-head-text: #ffb000;
+  --table-line: #1a1f27;
+  --table-stripe: #0e1218;
+
+  --scoreboard-bg: radial-gradient(ellipse at center, #0c1016 0%, #000 75%);
+  --scoreboard-border: 3px solid #1b2029;
+  --scoreboard-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
+
+  --team-card-bg: #0b0e13;
+  --team-card-text: #eef1f6;
+  --team-row-bg: #151a22;
+  --team-row-border: 1px solid #222833;
+
+
+  --modal-bg: #0d1117;
+  --overlay: rgba(0, 0, 0, 0.75);
+  --toast-bg: #ffb000;
+  --toast-text: #000;
+}
+
+[data-theme='arena'] .goal-btn {
+  font-weight: 700;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--team-accent) 60%, transparent);
+}
+
+[data-theme='arena'] .timeline-score,
+[data-theme='arena'] .game-card-score {
+  color: var(--accent);
+}
+
+/* Tokens that depend on the team colour are resolved per team element. */
+[data-theme='arena'] [data-team] {
+  --score-color: var(--team-accent);
+  --score-shadow: 0 0 24px color-mix(in srgb, var(--team-accent) 70%, transparent),
+    0 0 4px color-mix(in srgb, var(--team-accent) 90%, transparent);
+  --score-label-color: var(--team-accent);
+  --team-card-border: var(--team-accent);
+  --team-card-shadow: 0 0 22px color-mix(in srgb, var(--team-accent) 22%, transparent);
+  --team-title-color: var(--team-accent);
+  --team-title-shadow: 0 0 14px color-mix(in srgb, var(--team-accent) 60%, transparent);
+  --goal-team-bg: #0b0e13;
+  --goal-team-text: var(--team-accent);
+  --goal-team-border: var(--team-accent);
+  --goal-team-shadow: 0 0 26px color-mix(in srgb, var(--team-accent) 30%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--team-accent) 12%, transparent);
+}

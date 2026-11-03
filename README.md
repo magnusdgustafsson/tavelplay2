@@ -1,20 +1,48 @@
-# TavelPlay (Tavelspel)
+# TavelPlay 2
 
-A Progressive Web App for tracking floorball game scores, goal scorers, and assists. Optimized for iPad/tablet in landscape. Works offline.
+A Progressive Web App for tracking floorball games: scores, goal scorers,
+assists, awards and the day's standings. Built for iPad in landscape and
+works offline once opened.
 
-## Push to GitHub (run in terminal from this folder)
+## Features
+
+- Players per session (max 20) and a saved list of recurring players
+- Smart random teams that mix players compared with the previous game,
+  shuffle animation, 60 s auto-start, edit teams, swap sides, rematch
+- Optional starting lineups (3v3–11v11), dedicated goalkeepers, max score,
+  assists on/off
+- Goal registration with scorer and assist, undo last goal, add or remove
+  players during a game (late joiners get no win credit; leavers keep it
+  if they stayed through their team's 2nd goal)
+- Automatic plus/minus with fair lineups (3–5 per side, no subs)
+- Decisive goals ⚡, hattricks 🎩, MVP, best defender, best goalkeeper,
+  most wins/points/goals/assists and the pig award
+- Game history with editing and deleting – all stats are recalculated
+- Today's stats exported as a PNG image (share sheet on iPad)
+- Three themes: **C64 Retro**, **Modern Light** and **Arena**
+- The current game survives a reload and the screen is kept awake during
+  a game
+
+## Development
 
 ```bash
-cd C:\Users\magnu\Desktop\Cursor
-git init
-git remote add origin https://github.com/magnusdgustafsson/tavelspel.git
-git add .
-git commit -m "Initial commit: floorball score tracker PWA"
-git branch -M main
-git push -u origin main
+npm install
+npm run dev      # local dev server
+npm test         # unit tests for the game rules and stats
+npm run build    # production build in dist/
 ```
 
-## Host on GitHub Pages
+The code is split into:
 
-Repo → **Settings** → **Pages** → Source: **Deploy from a branch** → Branch: **main** → Save.  
-App will be at: `https://magnusdgustafsson.github.io/tavelspel/`
+- `src/domain` – pure game rules: teams, stats, awards (fully tested)
+- `src/state` – the app store (zustand), saved to localStorage
+- `src/screens`, `src/ui` – React components
+- `src/themes` – one CSS file per theme; each theme is a set of CSS
+  variables, so adding a theme means adding one file and one entry in
+  `src/themes/index.ts`
+
+## Deploy
+
+Vercel detects the Vite project automatically (build `npm run build`,
+output `dist`). Every push to `main` deploys a new version; the app
+updates itself the next time it is opened.

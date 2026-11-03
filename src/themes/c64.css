@@ -1,0 +1,92 @@
+/* C64 Retro – the original TavelPlay look: grey panels, cyan buttons, pixel font. */
+[data-theme='c64'] {
+  --bg: #606060;
+  --text: #000000;
+  --text-muted: #2b2b2b;
+  --title-color: #000000;
+  --accent: #00ffff;
+  --divider: #d0d0d0;
+
+  --sidebar-bg: #a0a0a0;
+  --sidebar-text: #000000;
+  --sidebar-line: #707070;
+
+  --surface: #a0a0a0;
+  --surface-text: #000000;
+  --surface-muted: #2b2b2b;
+  --border-strong: #404040;
+  --border-width: 2px;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --font-display: 'Press Start 2P', 'Courier New', monospace;
+  --font-body: 'Courier New', Courier, monospace;
+  --font-names: 'Courier New', Courier, monospace;
+  --font-button: Arial, Helvetica, sans-serif;
+  --font-score: 'Press Start 2P', 'Courier New', monospace;
+  --font-input: 'Courier New', Courier, monospace;
+  --title-size: 24px;
+  --title-transform: none;
+  --title-spacing: 0;
+  --sidebar-title-size: 14px;
+  --team-title-size: 18px;
+  --h3-size: 13px;
+  --modal-title-size: 16px;
+  --score-label-size: 20px;
+  --score-weight: 400;
+  --score-size: clamp(80px, 16vh, 150px);
+  --final-score-size: 72px;
+  --goal-btn-size: 22px;
+  --standings-size: 13px;
+  --legend-size: 12px;
+  --team-name-max: 24px;
+
+  --primary-bg: #00ffff;
+  --primary-text: #000000;
+  --secondary-bg: #606060;
+  --secondary-text: #ffffff;
+  --danger-bg: #8b2a2a;
+  --danger-text: #ffffff;
+  --goal-btn-bg: #00ff00;
+  --goal-btn-text: #000000;
+  --assist-btn-bg: #ffff00;
+  --assist-btn-text: #000000;
+  --selected-ring: #000000;
+
+  --input-bg: #d0d0d0;
+  --input-text: #000000;
+  --focus: #00ffff;
+  --switch-off: #606060;
+  --switch-on: #00c8c8;
+  --switch-knob: #e8e8e8;
+
+  --table-head-bg: #333333;
+  --table-head-text: #ffffff;
+  --table-line: #606060;
+  --table-stripe: #d0d0d0;
+
+  --overlay: rgba(0, 0, 0, 0.5);
+  --toast-bg: #000000;
+  --toast-text: #00ffff;
+}
+
+[data-theme='c64'] body {
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+}
+
+[data-theme='c64'] .standings td,
+[data-theme='c64'] .stats-table td {
+  font-weight: 700;
+}
+
+[data-theme='c64'] .team-row {
+  font-weight: 700;
+}
+
+/* Tokens that depend on the team colour are resolved per team element. */
+[data-theme='c64'] [data-team] {
+  --score-color: var(--team-bg);
+  --score-label-color: var(--team-bg);
+}

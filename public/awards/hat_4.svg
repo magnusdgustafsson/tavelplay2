@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <defs>
+    <linearGradient id="hatBlack4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A4A4A"/>
+      <stop offset="1" stop-color="#1A1A1A"/>
+    </linearGradient>
+    <linearGradient id="hatBand4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#D0D0D0"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="20" width="20" height="3" fill="url(#hatBlack4)" stroke="#0A0A0A" stroke-width="1"/>
+  <rect x="10" y="8" width="12" height="13" fill="url(#hatBlack4)" stroke="#0A0A0A" stroke-width="1"/>
+  <rect x="10" y="18" width="12" height="2" fill="url(#hatBand4)" stroke="#0A0A0A" stroke-width="1"/>
+  <rect x="11" y="9" width="1" height="9" fill="#FFFFFF" opacity="0.3"/>
+  <text x="16" y="16" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="8" font-weight="900" fill="#FFFFFF">4</text>
+</svg>

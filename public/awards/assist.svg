@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="greenBadgeOuter" cx="30%" cy="25%" r="85%">
+      <stop offset="0" stop-color="#66FF66"/>
+      <stop offset="1" stop-color="#00A86B"/>
+    </radialGradient>
+    <radialGradient id="greenBadgeInner" cx="35%" cy="30%" r="85%">
+      <stop offset="0" stop-color="#3DFFB2"/>
+      <stop offset="1" stop-color="#007A8A"/>
+    </radialGradient>
+    <linearGradient id="handGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#66FF66"/>
+      <stop offset="1" stop-color="#00CC00"/>
+    </linearGradient>
+    <linearGradient id="handGreenShade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7FFF7F"/>
+      <stop offset="1" stop-color="#00AA00"/>
+    </linearGradient>
+    <pattern id="greenDither" width="2" height="2" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="none"/>
+      <rect x="0" y="0" width="1" height="1" fill="#FFFFFF" opacity="0.10"/>
+      <rect x="1" y="1" width="1" height="1" fill="#FFFFFF" opacity="0.10"/>
+    </pattern>
+  </defs>
+  <circle cx="16" cy="16" r="15" fill="url(#greenBadgeOuter)" stroke="#004400" stroke-width="2"/>
+  <circle cx="16" cy="16" r="12" fill="url(#greenBadgeInner)" stroke="#004400" stroke-width="1"/>
+  <circle cx="16" cy="16" r="12" fill="url(#greenDither)"/>
+  <g transform="rotate(90 16 16) translate(-2 0)">
+    <path d="M11 14
+             C11 12, 13 11, 15 11
+             H17
+             C19 11, 21 12, 21 14
+             V20
+             C21 22, 19 24, 16 24
+             C13 24, 11 22, 11 20 Z"
+          fill="url(#handGreen)" stroke="#004400" stroke-width="1"/>
+    <rect x="12" y="9" width="2" height="5" fill="url(#handGreenShade)" stroke="#004400" stroke-width="1"/>
+    <rect x="14" y="8" width="2" height="6" fill="url(#handGreenShade)" stroke="#004400" stroke-width="1"/>
+    <rect x="16" y="8" width="2" height="6" fill="url(#handGreenShade)" stroke="#004400" stroke-width="1"/>
+    <rect x="18" y="9" width="2" height="5" fill="url(#handGreenShade)" stroke="#004400" stroke-width="1"/>
+    <path d="M10 16 C9 16, 9 18, 10 19 L11 20 V16 Z"
+          fill="url(#handGreenShade)" stroke="#004400" stroke-width="1"/>
+  </g>
+  <text x="16" y="21"
+        text-anchor="middle"
+        font-family="Verdana, Arial, sans-serif"
+        font-size="10"
+        font-weight="900"
+        fill="#004400">A</text>
+  <text x="16" y="21"
+        text-anchor="middle"
+        font-family="Verdana, Arial, sans-serif"
+        font-size="10"
+        font-weight="900"
+        fill="#FFFFFF">A</text>
+  <rect x="12" y="12" width="1" height="3" fill="#FFFFFF" opacity="0.45"/>
+</svg>

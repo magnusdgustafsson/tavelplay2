@@ -1,0 +1,136 @@
+/* Modern Light – clean and bright, easy to read in a well-lit hall. */
+[data-theme='light'] {
+  --bg: #f3f5f9;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --title-color: #0f172a;
+  --accent: #2563eb;
+  --divider: #e3e7ee;
+
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #111827;
+  --sidebar-line: #eef1f5;
+
+  --surface: #ffffff;
+  --surface-text: #111827;
+  --surface-muted: #6b7280;
+  --border-strong: #dde2ea;
+  --border-width: 1px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --panel-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 14px rgba(16, 24, 40, 0.04);
+
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-button: 'Inter', system-ui, sans-serif;
+  --font-score: 'Inter', system-ui, sans-serif;
+  --title-size: 30px;
+  --title-transform: none;
+  --title-spacing: -0.01em;
+  --sidebar-title-size: 18px;
+  --team-title-size: 20px;
+  --h3-size: 17px;
+  --score-label-size: 22px;
+  --score-weight: 800;
+  --score-size: clamp(100px, 22vh, 200px);
+  --final-score-size: 96px;
+  --goal-btn-size: 28px;
+  --standings-size: 13px;
+  --stats-size: 16px;
+  --button-weight: 650;
+
+  --primary-bg: #2563eb;
+  --primary-text: #ffffff;
+  --primary-border: #2563eb;
+  --primary-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  --secondary-bg: #ffffff;
+  --secondary-text: #1f2937;
+  --danger-bg: #dc2626;
+  --danger-text: #ffffff;
+  --goal-btn-bg: #16a34a;
+  --goal-btn-text: #ffffff;
+  --assist-btn-bg: #f59e0b;
+  --assist-btn-text: #111827;
+  --selected-ring: #2563eb;
+
+  --input-bg: #ffffff;
+  --input-text: #111827;
+  --focus: #93b4f8;
+  --switch-off: #d6dbe4;
+  --switch-on: #2563eb;
+  --switch-knob: #ffffff;
+
+  --table-head-bg: #f4f6fa;
+  --table-head-text: #4b5563;
+  --table-line: #eceff4;
+  --table-stripe: #fafbfd;
+
+  --score-color: #0f172a;
+  --score-label-color: #0f172a;
+
+  --team-card-bg: #ffffff;
+  --team-card-text: #111827;
+  --team-card-border: #dde2ea;
+  --team-card-border-width: 1px;
+  --team-card-shadow: var(--panel-shadow);
+  --team-row-bg: #f4f6fa;
+
+  --overlay: rgba(15, 23, 42, 0.45);
+  --toast-bg: #111827;
+  --toast-text: #ffffff;
+}
+
+[data-theme='light'] .team-card {
+  border-top: 8px solid var(--team-bg);
+}
+
+[data-theme='light'] [data-team='white'] .team-card,
+[data-theme='light'] .team-card[data-team='white'] {
+  border-top-color: #c9ced8;
+}
+
+[data-theme='light'] .team-card h2 {
+  font-weight: 800;
+}
+
+[data-theme='light'] .team-row {
+  font-weight: 600;
+}
+
+[data-theme='light'] .score-label {
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+[data-theme='light'] .score-label::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--team-bg);
+  border: 1px solid #c9ced8;
+}
+
+[data-theme='light'] .scoreboard {
+  background: #ffffff;
+  border: 1px solid #dde2ea;
+  box-shadow: var(--panel-shadow);
+}
+
+[data-theme='light'] .goal-btn[data-team='white'] {
+  border-color: #c9ced8;
+}
+
+[data-theme='light'] .title {
+  font-weight: 800;
+}
+
+[data-theme='light'] .table th {
+  font-weight: 600;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

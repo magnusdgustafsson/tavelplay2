@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="badgeOuter" cx="30%" cy="25%" r="80%">
+      <stop offset="0" stop-color="#FFB3D9"/>
+      <stop offset="1" stop-color="#FF6AD5"/>
+    </radialGradient>
+    <radialGradient id="badgeInner" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#FF9CCE"/>
+      <stop offset="1" stop-color="#FF2E6E"/>
+    </radialGradient>
+    <pattern id="dither" width="2" height="2" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="none"/>
+      <rect x="0" y="0" width="1" height="1" fill="#FFFFFF" opacity="0.10"/>
+      <rect x="1" y="1" width="1" height="1" fill="#FFFFFF" opacity="0.10"/>
+    </pattern>
+    <radialGradient id="pigFace" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#FFD0DA"/>
+      <stop offset="1" stop-color="#FF7FA0"/>
+    </radialGradient>
+    <radialGradient id="snout" cx="40%" cy="35%" r="80%">
+      <stop offset="0" stop-color="#FFB2C4"/>
+      <stop offset="1" stop-color="#FF6C8E"/>
+    </radialGradient>
+  </defs>
+  <circle cx="16" cy="16" r="15" fill="url(#badgeOuter)" stroke="#0B001A" stroke-width="2"/>
+  <circle cx="16" cy="16" r="12" fill="url(#badgeInner)" stroke="#0B001A" stroke-width="1"/>
+  <circle cx="16" cy="16" r="12" fill="url(#dither)"/>
+  <circle cx="16" cy="17" r="9" fill="url(#pigFace)" stroke="#0B001A" stroke-width="1"/>
+  <path d="M10 10l-3-2 1 5" fill="#FF9CB3" stroke="#0B001A" stroke-width="1" stroke-linejoin="miter"/>
+  <path d="M22 10l3-2-1 5" fill="#FF9CB3" stroke="#0B001A" stroke-width="1" stroke-linejoin="miter"/>
+  <rect x="12" y="15" width="2" height="2" fill="#0B001A"/>
+  <rect x="18" y="15" width="2" height="2" fill="#0B001A"/>
+  <ellipse cx="16" cy="20" rx="6" ry="4" fill="url(#snout)" stroke="#0B001A" stroke-width="1"/>
+  <rect x="13" y="19" width="2" height="2" fill="#0B001A" opacity="0.85"/>
+  <rect x="17" y="19" width="2" height="2" fill="#0B001A" opacity="0.85"/>
+  <rect x="12" y="12" width="1" height="4" fill="#FFFFFF" opacity="0.6"/>
+  <rect x="13" y="12" width="1" height="2" fill="#FFFFFF" opacity="0.35"/>
+</svg>

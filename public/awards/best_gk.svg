@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="gkBadgeOuter" cx="30%" cy="25%" r="85%">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#B0B0B0"/>
+    </radialGradient>
+    <radialGradient id="gkBadgeInner" cx="35%" cy="30%" r="85%">
+      <stop offset="0" stop-color="#E8E8E8"/>
+      <stop offset="1" stop-color="#7A7A7A"/>
+    </radialGradient>
+    <linearGradient id="gkMask" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#C0C0C0"/>
+    </linearGradient>
+    <pattern id="gkDither" width="2" height="2" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="none"/>
+      <rect x="0" y="0" width="1" height="1" fill="#FFFFFF" opacity="0.12"/>
+      <rect x="1" y="1" width="1" height="1" fill="#FFFFFF" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <circle cx="16" cy="16" r="15" fill="url(#gkBadgeOuter)" stroke="#1A1A1A" stroke-width="2"/>
+  <circle cx="16" cy="16" r="12" fill="url(#gkBadgeInner)" stroke="#1A1A1A" stroke-width="1"/>
+  <circle cx="16" cy="16" r="12" fill="url(#gkDither)"/>
+  <!-- Mask outline -->
+  <path d="M10 9
+           L22 9
+           L22 17
+           C22 20 19.5 22 16 23
+           C12.5 22 10 20 10 17
+           Z"
+        fill="url(#gkMask)" stroke="#1A1A1A" stroke-width="1" stroke-linejoin="miter"/>
+  <!-- Eye holes -->
+  <rect x="12" y="13" width="3" height="2" fill="#1A1A1A"/>
+  <rect x="17" y="13" width="3" height="2" fill="#1A1A1A"/>
+  <!-- Vertical mask stitches -->
+  <rect x="15" y="10" width="1" height="3" fill="#1A1A1A" opacity="0.8"/>
+  <rect x="13" y="11" width="1" height="2" fill="#1A1A1A" opacity="0.6"/>
+  <rect x="19" y="11" width="1" height="2" fill="#1A1A1A" opacity="0.6"/>
+  <!-- Horizontal claw-like slashes -->
+  <rect x="11" y="18" width="4" height="1" fill="#8B0000" opacity="0.9"/>
+  <rect x="13" y="19" width="4" height="1" fill="#8B0000" opacity="0.8"/>
+  <rect x="15" y="20" width="4" height="1" fill="#8B0000" opacity="0.7"/>
+</svg>
