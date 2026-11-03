@@ -36,8 +36,9 @@
   --score-size: clamp(100px, 22vh, 200px);
   --final-score-size: 96px;
   --goal-btn-size: 28px;
-  --standings-size: 13px;
-  --stats-size: 16px;
+  --standings-size: 15px;
+  --stats-size: 19px;
+  --names-weight: 700;
   --button-weight: 650;
 
   --primary-bg: #2563eb;
@@ -94,9 +95,6 @@
   font-weight: 800;
 }
 
-[data-theme='light'] .team-row {
-  font-weight: 600;
-}
 
 [data-theme='light'] .score-label {
   font-weight: 800;

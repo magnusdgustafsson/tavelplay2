@@ -21,11 +21,13 @@
   --radius-lg: 12px;
 
   --font-display: 'Press Start 2P', 'Courier New', monospace;
-  --font-body: 'Courier New', Courier, monospace;
-  --font-names: 'Courier New', Courier, monospace;
+  --font-body: 'JetBrains Mono', 'Courier New', monospace;
+  --font-names: 'JetBrains Mono', 'Courier New', monospace;
+  --body-weight: 700;
+  --names-weight: 800;
   --font-button: Arial, Helvetica, sans-serif;
   --font-score: 'Press Start 2P', 'Courier New', monospace;
-  --font-input: 'Courier New', Courier, monospace;
+  --font-input: 'JetBrains Mono', 'Courier New', monospace;
   --title-size: 24px;
   --title-transform: none;
   --title-spacing: 0;
@@ -38,9 +40,9 @@
   --score-size: clamp(80px, 16vh, 150px);
   --final-score-size: 72px;
   --goal-btn-size: 22px;
-  --standings-size: 13px;
-  --legend-size: 12px;
-  --team-name-max: 24px;
+  --standings-size: 14px;
+  --legend-size: 14px;
+  --team-name-max: 28px;
 
   --primary-bg: #00ffff;
   --primary-text: #000000;
@@ -81,9 +83,6 @@
   font-weight: 700;
 }
 
-[data-theme='c64'] .team-row {
-  font-weight: 700;
-}
 
 /* Tokens that depend on the team colour are resolved per team element. */
 [data-theme='c64'] [data-team] {

@@ -41,8 +41,9 @@
   --score-size: clamp(110px, 24vh, 220px);
   --final-score-size: 100px;
   --goal-btn-size: 32px;
-  --standings-size: 13px;
-  --team-name-max: 26px;
+  --standings-size: 15px;
+  --team-name-max: 32px;
+  --names-weight: 600;
 
   --primary-bg: #ffb000;
   --primary-text: #0b0b0b;

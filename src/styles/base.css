@@ -21,6 +21,7 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: var(--base-size, 16px);
+  font-weight: var(--body-weight, 400);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
@@ -220,7 +221,7 @@ input {
   border-radius: var(--radius);
   padding: 12px 16px;
   min-height: 54px;
-  font-size: 17px;
+  font-size: 19px;
   font-family: var(--font-input, var(--font-body));
   min-width: 0;
 }
@@ -313,7 +314,9 @@ input {
   color: var(--surface-text, var(--text));
   border: var(--border-width) solid var(--border-strong);
   border-radius: var(--radius);
-  font-size: 17px;
+  font-size: 20px;
+  font-family: var(--font-names, var(--font-body));
+  font-weight: var(--names-weight, 600);
 }
 
 .list-item.inactive {
@@ -488,6 +491,8 @@ input {
 }
 
 .table .name-cell {
+  font-family: var(--font-names, var(--font-body));
+  font-weight: var(--names-weight, 600);
   max-width: 1px;
   width: 100%;
   overflow: hidden;
@@ -495,7 +500,7 @@ input {
 }
 
 .standings {
-  font-size: var(--standings-size, 12px);
+  font-size: var(--standings-size, 15px);
 }
 
 .standings th:first-child,
@@ -504,7 +509,7 @@ input {
 }
 
 .stats-table {
-  font-size: var(--stats-size, 17px);
+  font-size: var(--stats-size, 20px);
 }
 
 .stats-table th,
@@ -585,10 +590,11 @@ input {
 
 .team-row {
   /* Rows shrink to fit so no scrolling is ever needed. */
-  --row-h: min(64px, calc((100cqh - (var(--rows) - 1) * 1.5cqh) / var(--rows)));
+  --row-h: min(72px, calc((100cqh - (var(--rows) - 1) * 1.5cqh) / var(--rows)));
   height: var(--row-h);
-  min-height: 26px;
-  font-size: clamp(13px, calc(var(--row-h) * 0.42), var(--team-name-max, 22px));
+  min-height: 30px;
+  font-size: clamp(16px, calc(var(--row-h) * 0.5), var(--team-name-max, 30px));
+  font-weight: var(--names-weight, 600);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -812,8 +818,9 @@ input {
   gap: 12px;
   padding: 0 12px;
   border-bottom: 2px solid var(--table-line);
-  font-size: clamp(14px, calc(var(--row-h) * 0.36), 24px);
+  font-size: clamp(17px, calc(var(--row-h) * 0.42), 30px);
   font-family: var(--font-names, var(--font-body));
+  font-weight: var(--names-weight, 600);
 }
 
 .goal-row:last-child {
@@ -868,7 +875,8 @@ input {
   color: var(--surface-text, var(--text));
   border: var(--border-width) solid var(--border-strong);
   border-radius: var(--radius);
-  font-size: 17px;
+  font-size: 20px;
+  font-family: var(--font-names, var(--font-body));
 }
 
 .timeline-item.decisive {
@@ -1034,17 +1042,18 @@ input {
 }
 
 .stats-wrap .stats-table {
-  font-size: clamp(11px, calc(100cqh / (var(--rows) + 1) / 2.6), var(--stats-size, 17px));
+  font-size: clamp(11px, calc(100cqh / (var(--rows) + 1) / 2.75), var(--stats-size, 20px));
 }
 
 .stats-wrap .stats-table th,
 .stats-wrap .stats-table td {
-  padding: 0.55em 0.6em;
+  padding: 0.4em 0.6em;
+  height: 2.6em;
 }
 
 .stats-wrap .award {
-  width: 1.9em;
-  height: 1.9em;
+  width: 1.6em;
+  height: 1.6em;
 }
 
 .stats-wrap .awards-cell {

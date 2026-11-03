@@ -11,6 +11,8 @@ import '@fontsource/oswald/latin-600.css';
 import '@fontsource/oswald/latin-700.css';
 import '@fontsource/orbitron/latin-700.css';
 import '@fontsource/orbitron/latin-900.css';
+import '@fontsource/jetbrains-mono/latin-700.css';
+import '@fontsource/jetbrains-mono/latin-800.css';
 import './styles/base.css';
 import './themes';
 import { App } from './App';
