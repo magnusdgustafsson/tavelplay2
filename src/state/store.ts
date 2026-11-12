@@ -23,6 +23,7 @@ import {
 } from '../domain/game';
 import type { RemoveResult } from '../domain/game';
 import { isPlusMinusFair, pickStarters, randomizeTeams, reconcileTeams } from '../domain/teams';
+import type { PastLineup } from '../domain/teams';
 import type { ThemeId } from '../themes';
 
 export type Screen =
@@ -46,7 +47,6 @@ interface Data {
   teams: Teams | null;
   previousTeams: Teams | null;
   starters: StartingLineup | null;
-  teamHistory: string[];
   settings: Settings;
   theme: ThemeId;
   screen: Screen;
@@ -104,7 +104,6 @@ const initialData = (): Omit<Data, 'recurring' | 'theme' | 'settings'> => ({
   teams: null,
   previousTeams: null,
   starters: null,
-  teamHistory: [],
   screen: 'entries',
   shuffleNonce: 0,
   teamsEditNonce: 0,
@@ -113,6 +112,14 @@ const initialData = (): Omit<Data, 'recurring' | 'theme' | 'settings'> => ({
 const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 export const activePlayers = (s: Pick<Data, 'players'>) => s.players.filter((p) => p.active);
+
+/** Who played together in each game this session (incl. players who left mid-game). */
+export function sessionLineups(games: readonly Game[]): PastLineup[] {
+  return games.map((g) => ({
+    left: [...g.teams.left, ...g.removed.filter((r) => r.side === 'left').map((r) => r.id)],
+    right: [...g.teams.right, ...g.removed.filter((r) => r.side === 'right').map((r) => r.id)],
+  }));
+}
 
 export const useStore = create<Store>()(
   persist(
@@ -229,9 +236,8 @@ export const useStore = create<Store>()(
             };
             if (s.teams) s.previousTeams = JSON.parse(JSON.stringify(s.teams));
             if (s.settings.randomTeamsEnabled || !s.teams) {
-              const r = randomizeTeams(active, s.previousTeams, s.teamHistory)!;
+              const r = randomizeTeams(active, sessionLineups(s.games))!;
               s.teams = { left: r.left, right: r.right, ...gk };
-              s.teamHistory = r.teamHistory;
               s.shuffleNonce++;
             } else {
               s.teams = reconcileTeams(s.teams, active);

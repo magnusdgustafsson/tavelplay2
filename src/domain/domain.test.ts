@@ -12,7 +12,7 @@ import {
   winsByColor,
 } from './stats';
 import { bestGoalkeeperIds, calculateAwards, mvpScore } from './awards';
-import { isPlusMinusFair, randomizeTeams, reconcileTeams, teamSignature } from './teams';
+import { isPlusMinusFair, pairCounts, randomizeTeams, reconcileTeams, teamSignature } from './teams';
 
 const players = (names: string[]): Player[] => names.map((n) => ({ id: n, name: n, active: true }));
 
@@ -182,28 +182,64 @@ describe('awards', () => {
 describe('teams', () => {
   const ids = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
+  /** Play a whole evening with the randomiser; returns all lineups. */
+  const evening = (players: string[], games: number, seed: number) => {
+    const rng = seeded(seed);
+    const history: { left: string[]; right: string[] }[] = [];
+    for (let g = 0; g < games; g++) history.push(randomizeTeams(players, history, rng)!);
+    return history;
+  };
+
   it('splits all players, left gets the extra one', () => {
-    const r = randomizeTeams(ids.slice(0, 7), null, [], seeded(1))!;
+    const r = randomizeTeams(ids.slice(0, 7), [], seeded(1))!;
     expect(r.left).toHaveLength(4);
     expect(r.right).toHaveLength(3);
     expect([...r.left, ...r.right].sort()).toEqual(ids.slice(0, 7).sort());
   });
 
-  it('with 8–11 players, 2 switch side in each direction when possible', () => {
-    const prev = { left: ids.slice(0, 5), right: ids.slice(5) };
-    for (let seed = 1; seed < 20; seed++) {
-      const r = randomizeTeams(ids, prev, [], seeded(seed))!;
-      const toLeft = r.left.filter((id) => prev.right.includes(id)).length;
-      const toRight = r.right.filter((id) => prev.left.includes(id)).length;
-      expect([toLeft, toRight]).toEqual([2, 2]);
+  it('never repeats a lineup during an evening', () => {
+    for (const n of [6, 7, 10, 14]) {
+      for (let seed = 1; seed <= 5; seed++) {
+        const sigs = evening(ids.concat(['11', '12', '13', '14']).slice(0, n), 8, seed).map((t) => teamSignature(t.left, t.right));
+        expect(new Set(sigs).size).toBe(sigs.length);
+      }
     }
   });
 
-  it('records lineups and resets history after 10', () => {
-    const r = randomizeTeams(ids, null, [], seeded(3))!;
-    expect(r.teamHistory).toEqual([teamSignature(r.left, r.right)]);
-    const full = Array.from({ length: 10 }, (_, i) => `x${i}`);
-    expect(randomizeTeams(ids, null, full, seeded(3))!.teamHistory).toEqual([]);
+  it('spreads teammates evenly: 10 players, 9 games → every pair 2–6 times, spread ≤ 3 on average', () => {
+    let spreadSum = 0;
+    for (let seed = 1; seed <= 10; seed++) {
+      const counts = pairCounts(evening(ids, 9, seed));
+      const values: number[] = [];
+      for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) values.push(counts.get(ids[i] < ids[j] ? `${ids[i]}|${ids[j]}` : `${ids[j]}|${ids[i]}`) ?? 0);
+      expect(Math.min(...values)).toBeGreaterThanOrEqual(2);
+      expect(Math.max(...values)).toBeLessThanOrEqual(6);
+      spreadSum += Math.max(...values) - Math.min(...values);
+    }
+    expect(spreadSum / 10).toBeLessThanOrEqual(3);
+  });
+
+  it('a late arrival is not forced to catch up with everyone at once', () => {
+    const history = evening(ids.slice(0, 9), 4, 2);
+    const next = randomizeTeams(ids, history, seeded(5))!;
+    expect(next.left.length + next.right.length).toBe(10);
+  });
+
+  it('small groups really change teams (7 players)', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const games = evening(ids.slice(0, 7), 6, seed);
+      for (let g = 1; g < games.length; g++) {
+        const prevLeft = new Set(games[g - 1].left);
+        const sameSide = games[g].left.filter((id) => prevLeft.has(id)).length + games[g].right.filter((id) => !prevLeft.has(id)).length;
+        expect(Math.min(sameSide, 7 - sameSide)).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
+  it('new players mid-evening are mixed in', () => {
+    const history = evening(ids.slice(0, 8), 3, 4);
+    const r = randomizeTeams(ids, history, seeded(9))!;
+    expect([...r.left, ...r.right].sort()).toEqual([...ids].sort());
   });
 
   it('reconcile drops inactive players and adds new ones to the smaller team', () => {

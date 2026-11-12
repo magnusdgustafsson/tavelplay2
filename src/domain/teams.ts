@@ -2,10 +2,6 @@ import type { StartingLineup, Teams } from './types';
 
 export type Rng = () => number;
 
-const MAX_SHUFFLE_ATTEMPTS = 50;
-const TARGET_CANDIDATES = 12;
-const TEAM_HISTORY_LIMIT = 10;
-
 export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
   const a = [...items];
   for (let i = a.length - 1; i > 0; i--) {
@@ -13,6 +9,12 @@ export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/** A lineup from an earlier game this session: who played on each side. */
+export interface PastLineup {
+  left: readonly string[];
+  right: readonly string[];
 }
 
 /** Same signature for (A vs B) and (B vs A). */
@@ -23,102 +25,164 @@ export function teamSignature(left: readonly string[], right: readonly string[])
   return `${first}|${second}`;
 }
 
-/** How many players should ideally switch side in each direction. */
-function targetSwitchesPerDirection(playerCount: number): number | null {
-  if (playerCount >= 8 && playerCount <= 11) return 2;
-  if (playerCount >= 12) return 3;
-  return null;
+const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
+/** How many games each pair of players has played on the same team. */
+export function pairCounts(history: readonly PastLineup[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const game of history) {
+    for (const team of [game.left, game.right]) {
+      for (let i = 0; i < team.length; i++) {
+        for (let j = i + 1; j < team.length; j++) {
+          const k = pairKey(team[i], team[j]);
+          counts.set(k, (counts.get(k) ?? 0) + 1);
+        }
+      }
+    }
+  }
+  return counts;
 }
 
-interface Candidate {
-  left: string[];
-  right: string[];
-  signature: string;
-  penalty: number;
-  totalSwitches: number;
-}
-
-export interface RandomizeResult {
-  left: string[];
-  right: string[];
-  teamHistory: string[];
-}
+/** Up to this many players every possible split is tried; above it we search. */
+const EXACT_MAX_PLAYERS = 16;
+const RESTARTS = 80;
+const EPS = 1e-9;
 
 /**
- * Random teams that mix things up compared with the previous game:
- * - 8–11 players: aim for exactly 2 players switching side in each direction
- * - 12+ players: aim for 3 in each direction
- * - fewer: maximise the number of switches
- * Lineups used in the last games (teamHistory) are avoided when possible.
+ * Random teams with as much variation as possible over the whole session.
+ *
+ * For every pair we compare how many games they have played on the same team
+ * with how many they "should" have by now (the games both took part in ×
+ * the chance of ending up on the same team). Putting a pair together costs
+ * ±(difference)², so pairs that are behind are pulled together and pairs that
+ * are ahead are kept apart; being together in the previous game costs a bit
+ * extra. The split with the lowest total cost wins – with up to 16 players
+ * every possible split is checked, above that a fast search is used – and
+ * among equally good splits one is picked at random. A lineup already used
+ * this session is never repeated if there is any alternative. The first game
+ * of a session is completely random.
  */
 export function randomizeTeams(
   playerIds: readonly string[],
-  previous: { left: readonly string[]; right: readonly string[] } | null,
-  teamHistory: readonly string[],
+  history: readonly PastLineup[],
   rng: Rng = Math.random,
-): RandomizeResult | null {
-  if (playerIds.length < 2) return null;
+): { left: string[]; right: string[] } | null {
+  const n = playerIds.length;
+  if (n < 2) return null;
+  const leftSize = Math.ceil(n / 2);
+  const together = (leftSize - 1) / (n - 1); // chance two players share a team
 
-  const target = targetSwitchesPerDirection(playerIds.length);
-  const prevLeft = previous ? new Set(previous.left) : null;
-  const prevRight = previous ? new Set(previous.right) : null;
-  const targeted = !!previous && target !== null;
+  const counts = pairCounts(history);
+  const last = history[history.length - 1];
+  const lastTogether = last ? pairCounts([last]) : new Map<string, number>();
+  const used = new Set(history.map((g) => teamSignature(g.left, g.right)));
+  const present = history.map((g) => new Set([...g.left, ...g.right]));
 
+  const w: number[][] = playerIds.map((a) =>
+    playerIds.map((b) => {
+      if (a === b) return 0;
+      const k = pairKey(a, b);
+      const both = present.filter((p) => p.has(a) && p.has(b)).length;
+      const diff = (counts.get(k) ?? 0) - both * together;
+      return Math.sign(diff) * diff * diff + (lastTogether.has(k) ? 1 : 0);
+    }),
+  );
+
+  // Best splits found so far (indices of the left team), preferring new lineups.
+  let best: number[][] = [];
+  let bestCost = Infinity;
+  let bestFresh = false;
   const seen = new Set<string>();
-  const candidates: Candidate[] = [];
-
-  const finish = (c: Candidate): RandomizeResult => {
-    let history = [...teamHistory, c.signature];
-    if (history.length > TEAM_HISTORY_LIMIT) history = [];
-    return { left: c.left, right: c.right, teamHistory: history };
+  const consider = (left: number[], cost: number) => {
+    const inLeft = new Set(left);
+    const sig = teamSignature(
+      left.map((i) => playerIds[i]),
+      playerIds.filter((_, i) => !inLeft.has(i)),
+    );
+    if (seen.has(sig)) return;
+    seen.add(sig);
+    const fresh = !used.has(sig);
+    if ((fresh && !bestFresh) || (fresh === bestFresh && cost < bestCost - EPS)) {
+      best = [left];
+      bestCost = cost;
+      bestFresh = fresh;
+    } else if (fresh === bestFresh && Math.abs(cost - bestCost) < EPS) {
+      best.push(left);
+    }
+  };
+  const splitCost = (inLeft: boolean[]) => {
+    let cost = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (inLeft[i] === inLeft[j]) cost += w[i][j];
+    return cost;
   };
 
-  for (let attempt = 0; attempt < MAX_SHUFFLE_ATTEMPTS; attempt++) {
-    const shuffled = shuffle(playerIds, rng);
-    const mid = Math.ceil(shuffled.length / 2);
-    const left = shuffled.slice(0, mid);
-    const right = shuffled.slice(mid);
-    const signature = teamSignature(left, right);
-    if (seen.has(signature)) continue;
-    seen.add(signature);
-
-    let toLeft = 0;
-    let toRight = 0;
-    if (prevLeft && prevRight) {
-      toLeft = left.filter((id) => prevRight.has(id)).length;
-      toRight = right.filter((id) => prevLeft.has(id)).length;
+  if (n <= EXACT_MAX_PLAYERS) {
+    // Try every split. With equal teams, player 0 is always "left" (the mirror
+    // image is the same split).
+    const sel: number[] = [];
+    const inLeft = new Array<boolean>(n).fill(false);
+    const walk = (from: number) => {
+      if (sel.length === leftSize) {
+        consider([...sel], splitCost(inLeft));
+        return;
+      }
+      for (let i = from; i <= n - (leftSize - sel.length); i++) {
+        if (n % 2 === 0 && sel.length === 0 && i > 0) break;
+        sel.push(i);
+        inLeft[i] = true;
+        walk(i + 1);
+        inLeft[i] = false;
+        sel.pop();
+      }
+    };
+    walk(0);
+  } else {
+    // Random starts + swap one player from each team while it lowers the cost.
+    for (let r = 0; r < RESTARTS; r++) {
+      const order = shuffle(
+        playerIds.map((_, i) => i),
+        rng,
+      );
+      const left = order.slice(0, leftSize);
+      const right = order.slice(leftSize);
+      for (;;) {
+        // Only swaps that strictly lower the cost (otherwise we could loop forever).
+        let bestDelta = -EPS;
+        let swaps: [number, number][] = [];
+        for (let i = 0; i < left.length; i++) {
+          for (let j = 0; j < right.length; j++) {
+            const a = left[i];
+            const b = right[j];
+            let delta = 0;
+            for (const x of left) if (x !== a) delta += w[b][x] - w[a][x];
+            for (const y of right) if (y !== b) delta += w[a][y] - w[b][y];
+            if (delta >= -EPS) continue;
+            if (delta < bestDelta - EPS) {
+              bestDelta = delta;
+              swaps = [[i, j]];
+            } else if (Math.abs(delta - bestDelta) < EPS) {
+              swaps.push([i, j]);
+            }
+          }
+        }
+        if (swaps.length === 0) break;
+        const [i, j] = swaps[Math.floor(rng() * swaps.length)];
+        [left[i], right[j]] = [right[j], left[i]];
+      }
+      const inLeft = new Array<boolean>(n).fill(false);
+      for (const i of left) inLeft[i] = true;
+      consider([...left].sort((x, y) => x - y), splitCost(inLeft));
     }
-    const totalSwitches = toLeft + toRight;
-    // Targeted mode: distance from target. Otherwise: more switches is better.
-    const penalty = targeted
-      ? Math.abs(toLeft - target!) + Math.abs(toRight - target!)
-      : -totalSwitches;
-
-    const candidate = { left, right, signature, penalty, totalSwitches };
-    if (targeted && penalty === 0 && !teamHistory.includes(signature)) {
-      return finish(candidate);
-    }
-    candidates.push(candidate);
-    if (seen.size >= TARGET_CANDIDATES) break;
   }
 
-  const fresh = candidates.filter((c) => !teamHistory.includes(c.signature));
-  const pool = fresh.length > 0 ? fresh : candidates;
-
-  let best: Candidate[] = [];
-  for (const c of pool) {
-    const b = best[0];
-    if (
-      !b ||
-      c.penalty < b.penalty ||
-      (c.penalty === b.penalty && c.totalSwitches > b.totalSwitches)
-    ) {
-      best = [c];
-    } else if (c.penalty === b.penalty && c.totalSwitches === b.totalSwitches) {
-      best.push(c);
-    }
-  }
-  return finish(best[Math.floor(rng() * best.length)]);
+  const pick = new Set(best[Math.floor(rng() * best.length)]);
+  let left = playerIds.filter((_, i) => pick.has(i));
+  let right = playerIds.filter((_, i) => !pick.has(i));
+  // Shuffle the order on screen, and with equal teams which side each plays on.
+  left = shuffle(left, rng);
+  right = shuffle(right, rng);
+  if (left.length === right.length && rng() < 0.5) [left, right] = [right, left];
+  return { left, right };
 }
 
 /**

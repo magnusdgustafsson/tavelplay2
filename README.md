@@ -7,8 +7,10 @@ works offline once opened.
 ## Features
 
 - Players per session (max 20) and a saved list of recurring players
-- Smart random teams that mix players compared with the previous game,
-  shuffle animation, 60 s auto-start, edit teams, swap sides, rematch
+- Random teams that remember every pair during the evening, so everyone
+  plays with everyone about equally often (no lineup is repeated), a
+  stick-throwing team draw animation, 60 s auto-start, edit teams, swap
+  sides, rematch
 - Optional starting lineups (3v3–11v11), dedicated goalkeepers, max score,
   assists on/off
 - Goal registration with scorer and assist, undo last goal, add or remove
