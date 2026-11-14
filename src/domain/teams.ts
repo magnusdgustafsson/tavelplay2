@@ -1,4 +1,4 @@
-import type { StartingLineup, Teams } from './types';
+import type { Teams } from './types';
 
 export type Rng = () => number;
 
@@ -215,21 +215,13 @@ export function reconcileTeams(teams: Teams, activeIds: readonly string[]): Team
   return { ...teams, left, right };
 }
 
-/** Starting players = first N of each (already shuffled) team. */
-export function pickStarters(teams: Teams, count: number): StartingLineup {
-  return {
-    left: teams.left.slice(0, Math.min(count, teams.left.length)),
-    right: teams.right.slice(0, Math.min(count, teams.right.length)),
-  };
-}
-
-/** Plus/minus is only fair with full starting lineups of 3–5 and no subs. */
-export function isPlusMinusFair(
-  startingLineupEnabled: boolean,
-  startingLineupCount: number,
-  activePlayerCount: number,
-): boolean {
-  if (!startingLineupEnabled) return false;
-  if (startingLineupCount < 3 || startingLineupCount > 5) return false;
-  return activePlayerCount === 2 * startingLineupCount;
+/**
+ * Plus/minus is tracked automatically when it is fair: equal teams of 3–5
+ * players and everybody present is playing (nobody on the bench), i.e. 6, 8
+ * or 10 players.
+ */
+export function isPlusMinusFair(leftCount: number, rightCount: number, activePlayerCount: number): boolean {
+  if (leftCount !== rightCount) return false;
+  if (leftCount < 3 || leftCount > 5) return false;
+  return leftCount + rightCount === activePlayerCount;
 }

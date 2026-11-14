@@ -731,8 +731,6 @@ input {
   text-align: center;
 }
 
-.badge-start { background: #2d5a27; color: #a8e6a0; border: 1.5px solid #1a3518; }
-.badge-subst { background: #5a9fd4; color: #e8f4fc; border: 1.5px solid #2a6a94; }
 .badge-late { background: #8a4a1a; color: #ffe8c8; border: 1.5px solid #5a3010; }
 
 .team-extra {

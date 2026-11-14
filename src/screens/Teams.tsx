@@ -138,14 +138,12 @@ function TeamCard({
   const players = useStore((s) => s.players);
   const goalkeepers = useStore((s) => s.goalkeepers);
   const settings = useStore((s) => s.settings);
-  const starters = useStore((s) => s.starters);
   const game = useStore((s) => s.currentGame);
   const movePlayer = useStore((s) => s.movePlayer);
   const removeFromTeams = useStore((s) => s.removeFromTeams);
   const removeDuringGame = useStore((s) => s.removePlayerDuringGame);
   const setGoalkeeper = useStore((s) => s.setGoalkeeper);
 
-  const showStarters = settings.startingLineupEnabled && starters && !shuffling;
   const finalDraw = useStore((s) => s.finalDraw);
   const contender = (id: string) => {
     if (!finalDraw) return null;
@@ -158,12 +156,7 @@ function TeamCard({
 
   const badge = (id: string) => {
     if (late.has(id)) return <span className="badge badge-late" title="Joined after own team scored – no win credit">LATE</span>;
-    if (!showStarters) return null;
-    return starters![side].includes(id) ? (
-      <span className="badge badge-start">STARTING</span>
-    ) : (
-      <span className="badge badge-subst">SUBST</span>
-    );
+    return null;
   };
 
   const confirmRemove = async (id: string) => {

@@ -220,28 +220,6 @@ export function Settings() {
           />
 
           <Toggle
-            label="Starting lineup"
-            hint="Plus/minus is tracked with 3–5 per side and no substitutes"
-            checked={s.startingLineupEnabled}
-            onChange={(v) => update({ startingLineupEnabled: v })}
-          >
-            <div className="setting-row">
-              <span>Players per team</span>
-              <select
-                className="select"
-                value={s.startingLineupCount}
-                onChange={(e) => update({ startingLineupCount: Number(e.target.value) })}
-              >
-                {Array.from({ length: 9 }, (_, i) => i + 3).map((n) => (
-                  <option key={n} value={n}>
-                    {n} vs {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </Toggle>
-
-          <Toggle
             label="Goalkeepers"
             hint="Dedicated goalkeepers with their own stats"
             checked={s.goalkeepersEnabled}

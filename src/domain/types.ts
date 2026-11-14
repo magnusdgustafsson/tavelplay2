@@ -49,11 +49,6 @@ export interface Teams {
   rightGkId: string | null;
 }
 
-export interface StartingLineup {
-  left: string[];
-  right: string[];
-}
-
 export interface RemovedPlayer {
   id: string;
   side: Side;
@@ -94,8 +89,6 @@ export interface Settings {
   winByTwoEnabled: boolean;
   pigAwardEnabled: boolean;
   randomTeamsEnabled: boolean;
-  startingLineupEnabled: boolean;
-  startingLineupCount: number;
   goalkeepersEnabled: boolean;
   leftColor: TeamColor;
   rightColor: TeamColor;
@@ -108,8 +101,6 @@ export const DEFAULT_SETTINGS: Settings = {
   winByTwoEnabled: false,
   pigAwardEnabled: true,
   randomTeamsEnabled: true,
-  startingLineupEnabled: false,
-  startingLineupCount: 5,
   goalkeepersEnabled: false,
   leftColor: 'black',
   rightColor: 'white',

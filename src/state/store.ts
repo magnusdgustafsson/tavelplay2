@@ -9,7 +9,6 @@ import type {
   RecurringPlayer,
   Settings,
   Side,
-  StartingLineup,
   Teams,
 } from '../domain/types';
 import { DEFAULT_SETTINGS, MAX_PLAYERS } from '../domain/types';
@@ -22,7 +21,7 @@ import {
   undoLastGoal,
 } from '../domain/game';
 import type { RemoveResult } from '../domain/game';
-import { isPlusMinusFair, pickStarters, randomizeTeams, reconcileTeams } from '../domain/teams';
+import { isPlusMinusFair, randomizeTeams, reconcileTeams } from '../domain/teams';
 import type { PastLineup } from '../domain/teams';
 import { finalDrawRules } from '../domain/awards';
 import type { FinalDraw } from '../domain/awards';
@@ -49,7 +48,6 @@ interface Data {
   currentGame: Game | null;
   teams: Teams | null;
   previousTeams: Teams | null;
-  starters: StartingLineup | null;
   settings: Settings;
   theme: ThemeId;
   screen: Screen;
@@ -109,7 +107,6 @@ const initialData = (): Omit<Data, 'recurring' | 'theme' | 'settings'> => ({
   currentGame: null,
   teams: null,
   previousTeams: null,
-  starters: null,
   screen: 'entries',
   shuffleNonce: 0,
   finalDraw: null,
@@ -152,7 +149,6 @@ export const useStore = create<Store>()(
       const swapDraft = (s: Data) => {
         if (!s.teams) return;
         [s.teams.left, s.teams.right] = [s.teams.right, s.teams.left];
-        if (s.starters) [s.starters.left, s.starters.right] = [s.starters.right, s.starters.left];
         [s.settings.leftColor, s.settings.rightColor] = [s.settings.rightColor, s.settings.leftColor];
       };
 
@@ -259,9 +255,6 @@ export const useStore = create<Store>()(
             } else {
               s.teams = reconcileTeams(s.teams, active);
             }
-            s.starters = s.settings.startingLineupEnabled
-              ? pickStarters(s.teams, s.settings.startingLineupCount)
-              : null;
             s.screen = 'teams';
           }),
         rematch: (swap = false) =>
@@ -272,9 +265,6 @@ export const useStore = create<Store>()(
               activePlayers(s).map((p) => p.id),
             );
             restoreLastGameColors(s);
-            s.starters = s.settings.startingLineupEnabled
-              ? pickStarters(s.teams, s.settings.startingLineupCount)
-              : null;
             if (swap) swapDraft(s);
             s.teamsEditNonce++;
           }),
@@ -285,9 +275,6 @@ export const useStore = create<Store>()(
             s.previousTeams = JSON.parse(JSON.stringify(s.teams));
             s.teams = reconcileTeams(s.teams, active);
             restoreLastGameColors(s);
-            s.starters = s.settings.startingLineupEnabled
-              ? pickStarters(s.teams, s.settings.startingLineupCount)
-              : null;
             swapDraft(s);
             s.teamsEditNonce++;
             s.screen = 'teams';
@@ -305,10 +292,6 @@ export const useStore = create<Store>()(
             const to: Side = from === 'left' ? 'right' : 'left';
             s.teams[from] = s.teams[from].filter((x) => x !== id);
             s.teams[to].push(id);
-            if (s.starters) {
-              s.starters.left = s.starters.left.filter((x) => x !== id);
-              s.starters.right = s.starters.right.filter((x) => x !== id);
-            }
             s.teamsEditNonce++;
           }),
         removeFromTeams: (id) => {
@@ -317,10 +300,6 @@ export const useStore = create<Store>()(
             if (!s.teams) return;
             s.teams.left = s.teams.left.filter((x) => x !== id);
             s.teams.right = s.teams.right.filter((x) => x !== id);
-            if (s.starters) {
-              s.starters.left = s.starters.left.filter((x) => x !== id);
-              s.starters.right = s.starters.right.filter((x) => x !== id);
-            }
             s.teamsEditNonce++;
           });
         },
@@ -334,11 +313,7 @@ export const useStore = create<Store>()(
         startGame: () =>
           set((s) => {
             if (!s.teams || s.teams.left.length === 0 || s.teams.right.length === 0) return;
-            const plusMinus = isPlusMinusFair(
-              s.settings.startingLineupEnabled,
-              s.settings.startingLineupCount,
-              activePlayers(s).length,
-            );
+            const plusMinus = isPlusMinusFair(s.teams.left.length, s.teams.right.length, activePlayers(s).length);
             s.currentGame = createGame(s.teams, s.settings, plusMinus);
             if (s.finalDraw) s.currentGame.final = true;
             s.screen = 'game';
@@ -409,10 +384,6 @@ export const useStore = create<Store>()(
           set((s) => {
             if (!s.currentGame) return;
             result = removeFromGame(s.currentGame, id);
-            if (result === 'ok' && s.starters) {
-              s.starters.left = s.starters.left.filter((x) => x !== id);
-              s.starters.right = s.starters.right.filter((x) => x !== id);
-            }
           });
           return result;
         },

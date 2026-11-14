@@ -14,12 +14,13 @@ works offline once opened.
 - Final game (offered after 4 games): two players tied for most wins, and
   two tied for fewest wins, are put on different teams so there is a single
   winner and a clear pig; afterwards the app goes straight to the stats
-- Optional starting lineups (3v3–11v11), dedicated goalkeepers, max score,
+- Dedicated goalkeepers, max score (optionally win by two, capped at 10),
   assists on/off
 - Goal registration with scorer and assist, undo last goal, add or remove
   players during a game (late joiners get no win credit; leavers keep it
   if they stayed through their team's 2nd goal)
-- Automatic plus/minus with fair lineups (3–5 per side, no subs)
+- Automatic plus/minus whenever it is fair: equal teams of 3–5 players
+  and nobody on the bench (6, 8 or 10 players)
 - Decisive goals ⚡, hattricks 🎩, MVP, best defender, best goalkeeper,
   most wins/points/goals/assists and the pig award
 - Game history with editing and deleting – all stats are recalculated

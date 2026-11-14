@@ -68,3 +68,21 @@ describe('final game', () => {
     expect(useStore.getState().currentGame!.final).toBeUndefined();
   });
 });
+
+describe('automatic plus/minus', () => {
+  beforeEach(() => useStore.getState().resetAll());
+  const start = (names: string[]) => {
+    for (const n of names) useStore.getState().addPlayer(n);
+    useStore.getState().goToTeamSelection();
+    useStore.getState().startGame();
+    return useStore.getState().currentGame!;
+  };
+  it('is on with 10 players (5 vs 5)', () => {
+    expect(start(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']).plusMinus).toBe(true);
+  });
+  it('is off with 9 or 12 players', () => {
+    expect(start(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']).plusMinus).toBe(false);
+    useStore.getState().resetAll();
+    expect(start(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']).plusMinus).toBe(false);
+  });
+});

@@ -248,11 +248,14 @@ describe('teams', () => {
     expect(t.right).toEqual(['3', '4']);
   });
 
-  it('plus/minus is fair only with 3–5 starters and exactly 2N players', () => {
-    expect(isPlusMinusFair(true, 4, 8)).toBe(true);
-    expect(isPlusMinusFair(true, 4, 9)).toBe(false);
-    expect(isPlusMinusFair(true, 6, 12)).toBe(false);
-    expect(isPlusMinusFair(false, 4, 8)).toBe(false);
+  it('plus/minus is automatic with equal teams of 3–5 and nobody on the bench', () => {
+    expect(isPlusMinusFair(5, 5, 10)).toBe(true);
+    expect(isPlusMinusFair(4, 4, 8)).toBe(true);
+    expect(isPlusMinusFair(3, 3, 6)).toBe(true);
+    expect(isPlusMinusFair(5, 4, 9)).toBe(false); // uneven teams
+    expect(isPlusMinusFair(6, 6, 12)).toBe(false); // too many per side
+    expect(isPlusMinusFair(2, 2, 4)).toBe(false); // too few
+    expect(isPlusMinusFair(5, 5, 11)).toBe(false); // someone on the bench
   });
 });
 
