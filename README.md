@@ -17,7 +17,8 @@ works offline once opened.
   winner and a clear pig; afterwards the app goes straight to the stats
 - Dedicated goalkeepers, max score (optionally win by two, capped at 10),
   assists on/off
-- Goal registration with scorer and assist, undo last goal, add or remove
+- Fast goal registration: tap the scorer, then the assist – it saves
+  itself after 3 s (undo for 10 s); add or remove
   players during a game (late joiners get no win credit; leavers keep it
   if they stayed through their team's 2nd goal)
 - Automatic plus/minus whenever it is fair: equal teams of 3–5 players

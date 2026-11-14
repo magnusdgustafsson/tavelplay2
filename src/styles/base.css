@@ -198,23 +198,6 @@ input {
   font-size: var(--button-small-size, 14px);
 }
 
-.btn-goal {
-  background: var(--goal-btn-bg);
-  color: var(--goal-btn-text);
-}
-
-.btn-assist {
-  background: var(--assist-btn-bg);
-  color: var(--assist-btn-text);
-}
-
-.btn-goal.selected,
-.btn-assist.selected {
-  outline: 4px solid var(--selected-ring);
-  outline-offset: 2px;
-  box-shadow: var(--selected-glow, none);
-}
-
 /* ---------- Forms ---------- */
 .input,
 .select {
@@ -886,53 +869,6 @@ input {
   min-width: 140px;
 }
 
-.goal-list {
-  flex: 0 1 auto;
-  min-height: 0;
-  container-type: size;
-  display: flex;
-  flex-direction: column;
-  height: calc(var(--rows) * 76px);
-  max-height: 100%;
-}
-
-.goal-row {
-  --row-h: min(76px, calc(100cqh / var(--rows)));
-  height: var(--row-h);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 12px;
-  border-bottom: 2px solid var(--table-line);
-  font-size: clamp(17px, calc(var(--row-h) * 0.42), 30px);
-  font-family: var(--font-names, var(--font-body));
-  font-weight: var(--names-weight, 600);
-}
-
-.goal-row:last-child {
-  border-bottom: none;
-}
-
-.goal-row .name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.goal-row .btn {
-  min-height: 0;
-  height: calc(var(--row-h) - 16px);
-  width: 120px;
-  padding: 0 8px;
-  font-size: clamp(12px, calc(var(--row-h) * 0.22), 16px);
-}
-
-.goal-row .spacer {
-  width: 120px;
-}
-
 /* ---------- Summary / history ---------- */
 .final-score {
   display: flex;
@@ -1324,4 +1260,143 @@ input {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ---------- Goal registration ---------- */
+.goal-modal {
+  width: min(860px, 100%);
+}
+
+.goal-hint {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  min-height: 1.4em;
+}
+
+.goal-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.goal-tiles.dense {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.goal-tile {
+  position: relative;
+  min-height: 92px;
+  padding: 18px 10px 10px;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border-strong);
+  background: var(--chip-bg, var(--input-bg));
+  color: var(--chip-text, var(--input-text));
+  font-family: var(--font-names, var(--font-body));
+  font-weight: var(--names-weight, 700);
+  font-size: 26px;
+  cursor: pointer;
+  transition: transform 0.08s, background-color 0.15s;
+}
+
+.goal-tiles.dense .goal-tile {
+  min-height: 72px;
+  font-size: 21px;
+}
+
+.goal-tile:active {
+  transform: scale(0.97);
+}
+
+.goal-tile.candidate {
+  border-style: dashed;
+  border-color: var(--assist-btn-bg);
+}
+
+.goal-tile.goal {
+  background: var(--goal-btn-bg);
+  color: var(--goal-btn-text);
+  outline: 4px solid var(--goal-btn-bg);
+  outline-offset: 2px;
+}
+
+.goal-tile.assist {
+  background: var(--assist-btn-bg);
+  color: var(--assist-btn-text);
+  outline: 4px solid var(--assist-btn-bg);
+  outline-offset: 2px;
+}
+
+.goal-tile-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-tag {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  font-family: var(--font-button);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.save-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--table-line);
+  overflow: hidden;
+}
+
+.save-bar-fill {
+  height: 100%;
+  background: var(--primary-bg);
+  transform-origin: left center;
+  animation: save-fill linear forwards;
+}
+
+@keyframes save-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.toast-action {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 19px;
+}
+
+.toast-btn {
+  font-family: var(--font-button);
+  font-weight: 800;
+  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 820px) {
+  .goal-tiles,
+  .goal-tiles.dense {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.goal-tile.goal,
+.goal-tile.assist {
+  border-color: var(--selected-ring, var(--border-strong));
+  box-shadow: var(--selected-glow, none);
 }
