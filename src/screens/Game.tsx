@@ -7,7 +7,7 @@ import { confirmDialog } from '../ui/dialogs';
 import { useWakeLock } from '../ui/common';
 
 /** Auto-save this long after the last tap (scorer or assist). */
-const SAVE_DELAY_MS = 3000;
+const SAVE_DELAY_MS = 5000;
 /** How long the "Undo" for a just-saved goal stays visible. */
 const UNDO_MS = 10000;
 
@@ -18,7 +18,7 @@ interface SavedGoal {
 }
 
 /**
- * Tap the scorer, then (optionally) the assist. The goal saves itself 3 s
+ * Tap the scorer, then (optionally) the assist. The goal saves itself 5 s
  * after the last tap; "No assist – save now" saves at once. With assists
  * turned off, tapping the scorer saves straight away.
  */
