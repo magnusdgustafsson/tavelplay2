@@ -11,6 +11,9 @@ works offline once opened.
   plays with everyone about equally often (no lineup is repeated), a
   stick-throwing team draw animation, 60 s auto-start, edit teams, swap
   sides, rematch
+- Final game (offered after 4 games): two players tied for most wins, and
+  two tied for fewest wins, are put on different teams so there is a single
+  winner and a clear pig; afterwards the app goes straight to the stats
 - Optional starting lineups (3v3–11v11), dedicated goalkeepers, max score,
   assists on/off
 - Goal registration with scorer and assist, undo last goal, add or remove

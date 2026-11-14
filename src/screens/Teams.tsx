@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Side, TeamColor, Teams as TeamsT } from '../domain/types';
+import type { Player, Side, TeamColor, Teams as TeamsT } from '../domain/types';
+import type { FinalDraw } from '../domain/awards';
 import { teamLabel } from '../domain/types';
 import { playerName, useStore } from '../state/store';
 import { addPlayerMessage } from './Entries';
@@ -145,6 +146,13 @@ function TeamCard({
   const setGoalkeeper = useStore((s) => s.setGoalkeeper);
 
   const showStarters = settings.startingLineupEnabled && starters && !shuffling;
+  const finalDraw = useStore((s) => s.finalDraw);
+  const contender = (id: string) => {
+    if (!finalDraw) return null;
+    if (finalDraw.crown?.includes(id)) return <span className="contender" title="Tied for most wins">👑</span>;
+    if (finalDraw.pig?.includes(id)) return <span className="contender" title="Tied for fewest wins">🐷</span>;
+    return null;
+  };
   const late = new Set(inGame && game ? game.lateJoinerIds : []);
   const rows = ids.length + (addMode ? 1 : 0);
 
@@ -191,7 +199,10 @@ function TeamCard({
             style={reveal ? { ['--i' as string]: index } : undefined}
           >
             {badge(id)}
-            <span className="name">{playerName(players, id)}</span>
+            <span className="name">
+              {playerName(players, id)}
+              {contender(id)}
+            </span>
             {editMode && !shuffling && (
               <>
                 <button
@@ -239,6 +250,12 @@ function TeamCard({
   );
 }
 
+function finalInfoText(fd: FinalDraw, players: Player[]): string {
+  const pair = (p: [string, string]) => `${playerName(players, p[0])} & ${playerName(players, p[1])}`;
+  const parts = [fd.crown && `${pair(fd.crown)} (👑)`, fd.pig && `${pair(fd.pig)} (🐷)`].filter(Boolean);
+  return parts.length === 0 ? 'Final: regular draw' : `Final: ${parts.join(' and ')} on opposite teams`;
+}
+
 export function Teams() {
   const screen = useStore((s) => s.screen);
   const inGame = screen === 'game-teams';
@@ -246,6 +263,8 @@ export function Teams() {
   const game = useStore((s) => s.currentGame);
   const settings = useStore((s) => s.settings);
   const previousTeams = useStore((s) => s.previousTeams);
+  const finalDraw = useStore((s) => s.finalDraw);
+  const players = useStore((s) => s.players);
   const shuffleNonce = useStore((s) => s.shuffleNonce);
   const editNonce = useStore((s) => s.teamsEditNonce);
   const { setScreen, startGame, rematch, swapSides, finishSession } = useStore.getState();
@@ -273,7 +292,8 @@ export function Teams() {
 
   return (
     <div className="screen">
-      <h1 className="title">{inGame ? 'Teams' : 'Team Selection'}</h1>
+      <h1 className="title">{inGame ? 'Teams' : finalDraw ? 'Final Game' : 'Team Selection'}</h1>
+      {finalDraw && !inGame && <p className="final-info">{finalInfoText(finalDraw, players)}</p>}
       <div className="teams">
         {phase && <ShuffleScene fading={phase === 'reveal'} />}
         {(['left', 'right'] as const).map((side) => (
@@ -325,7 +345,7 @@ export function Teams() {
             <button className="btn btn-secondary" disabled={shuffling} onClick={() => setScreen('entries')}>
               Back
             </button>
-            {previousTeams && (
+            {previousTeams && !finalDraw && (
               <button
                 className="btn btn-secondary"
                 onClick={async () => {
@@ -369,7 +389,7 @@ export function Teams() {
               disabled={shuffling || !teams || teams.left.length === 0 || teams.right.length === 0}
               onClick={startGame}
             >
-              Start Game {!shuffling && `(${startLeft})`}
+              {finalDraw ? 'Start Final' : 'Start Game'} {!shuffling && `(${startLeft})`}
             </button>
           </>
         )}

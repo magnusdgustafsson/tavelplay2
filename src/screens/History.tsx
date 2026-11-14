@@ -121,7 +121,10 @@ export function History() {
             return (
               <div className="panel game-card" key={game.id}>
                 <div className="game-card-head">
-                  <span className="game-card-title">Game {number}</span>
+                  <span className="game-card-title">
+                    Game {number}
+                    {game.final && ' · Final'}
+                  </span>
                   <span className="game-card-score">
                     <TeamDot color={game.colors.left} />
                     {teamLabel(game.colors.left)} {score.left} – {score.right} {teamLabel(game.colors.right)}

@@ -93,7 +93,7 @@ export function Game() {
 
   return (
     <div className="screen">
-      <h1 className="title">Game {gameNumber}</h1>
+      <h1 className="title">{game.final ? 'Final' : `Game ${gameNumber}`}</h1>
       <div className="scoreboard">
         <div className="score-team" data-team={game.colors.left}>
           <div className="score-label">{teamLabel(game.colors.left)}</div>

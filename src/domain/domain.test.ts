@@ -11,7 +11,7 @@ import {
   sortedStandings,
   winsByColor,
 } from './stats';
-import { bestGoalkeeperIds, calculateAwards, mvpScore } from './awards';
+import { bestGoalkeeperIds, calculateAwards, finalDrawRules, mvpScore } from './awards';
 import { isPlusMinusFair, pairCounts, randomizeTeams, reconcileTeams, teamSignature } from './teams';
 
 const players = (names: string[]): Player[] => names.map((n) => ({ id: n, name: n, active: true }));
@@ -310,5 +310,47 @@ describe('win by two – cap at 10 goals', () => {
     }
     addGoal(g, 'left', 'A', null); // 9–8
     expect(isMaxScoreReached(g)).toBe(false);
+  });
+});
+
+describe('final game draw', () => {
+  const ps = players(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
+  const all = ps.map((p) => p.id);
+  const statsWith = (wins: Record<string, number>) =>
+    new Map(ps.map((p) => [p.id, { ...computePlayerStats([p], []).get(p.id)!, gamesWon: wins[p.id] ?? 0 }]));
+
+  it('splits exactly two players tied for most and for fewest wins', () => {
+    const s = statsWith({ A: 4, B: 4, C: 3, D: 2, E: 2, F: 2, G: 1, H: 1 });
+    expect(finalDrawRules(ps, s, all, true)).toEqual({ crown: ['A', 'B'], pig: ['G', 'H'] });
+  });
+
+  it('regular draw when the leader is alone or three or more are tied', () => {
+    const s = statsWith({ A: 5, B: 4, C: 1, D: 1, E: 1, F: 2, G: 2, H: 3 });
+    expect(finalDrawRules(ps, s, all, true)).toEqual({ crown: null, pig: null });
+  });
+
+  it('no pig rule when the pig award is off, and only if both are playing', () => {
+    const s = statsWith({ A: 4, B: 4, G: 0, H: 0, C: 2, D: 2, E: 2, F: 2 });
+    expect(finalDrawRules(ps, s, all, false).pig).toBeNull();
+    expect(finalDrawRules(ps, s, all.filter((id) => id !== 'H'), true).pig).toBeNull();
+    expect(finalDrawRules(ps, s, all.filter((id) => id !== 'H'), true).crown).toEqual(['A', 'B']);
+  });
+
+  it('the draw always keeps the split pairs on different teams', () => {
+    const history = [{ left: ['A', 'B', 'G', 'H'], right: ['C', 'D', 'E', 'F'] }];
+    for (let seed = 1; seed <= 30; seed++) {
+      const r = randomizeTeams(all, history, seeded(seed), [['A', 'B'], ['G', 'H']])!;
+      expect(r.left.includes('A')).not.toBe(r.left.includes('B'));
+      expect(r.left.includes('G')).not.toBe(r.left.includes('H'));
+    }
+  });
+
+  it('also with 18 players (fast search)', () => {
+    const big = Array.from({ length: 18 }, (_, i) => `p${i}`);
+    for (let seed = 1; seed <= 5; seed++) {
+      const r = randomizeTeams(big, [], seeded(seed), [['p0', 'p1'], ['p2', 'p3']])!;
+      expect(r.left.includes('p0')).not.toBe(r.left.includes('p1'));
+      expect(r.left.includes('p2')).not.toBe(r.left.includes('p3'));
+    }
   });
 });

@@ -183,3 +183,36 @@ export function bestGoalkeeperIds(
     )
     .map((e) => e.id);
 }
+
+export interface FinalDraw {
+  /** Exactly two players share the most wins → put on different teams. */
+  crown: [string, string] | null;
+  /** Exactly two players share the fewest wins → put on different teams. */
+  pig: [string, string] | null;
+}
+
+/**
+ * Who has to be split up in the final game. Like the awards, it looks at all
+ * players of the session; a rule only applies when exactly two players are
+ * tied and both are playing the final. Otherwise the draw is the usual one.
+ */
+export function finalDrawRules(
+  players: readonly Player[],
+  stats: Map<string, PlayerStats>,
+  playingIds: readonly string[],
+  pigEnabled: boolean,
+): FinalDraw {
+  const playing = new Set(playingIds);
+  const wins = players.map((p) => ({ id: p.id, w: stats.get(p.id)?.gamesWon ?? 0 }));
+  const tiedPair = (target: number): [string, string] | null => {
+    const tied = wins.filter((x) => x.w === target).map((x) => x.id);
+    return tied.length === 2 && tied.every((id) => playing.has(id)) ? [tied[0], tied[1]] : null;
+  };
+  if (wins.length === 0) return { crown: null, pig: null };
+  const max = Math.max(...wins.map((x) => x.w));
+  const min = Math.min(...wins.map((x) => x.w));
+  return {
+    crown: max > 0 ? tiedPair(max) : null,
+    pig: pigEnabled && min !== max ? tiedPair(min) : null,
+  };
+}

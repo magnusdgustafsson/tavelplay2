@@ -1182,3 +1182,45 @@ input {
 .stats-table .awards-col {
   width: 100%;
 }
+
+/* ---------- Final game ---------- */
+.final-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  min-height: 54px;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border-strong);
+  background: var(--surface);
+  color: var(--surface-text, var(--text));
+  font-family: var(--font-button);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.final-toggle strong {
+  min-width: 2.6em;
+}
+
+.final-toggle.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.final-info {
+  text-align: center;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--surface-text, var(--text));
+  border: 2px solid var(--accent);
+}
+
+.contender {
+  font-size: 0.8em;
+  margin-left: 6px;
+  flex-shrink: 0;
+}

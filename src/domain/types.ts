@@ -75,6 +75,8 @@ export interface Game {
   maxScore: number | null;
   /** With a max score: the winner must also lead by two goals. */
   winByTwo?: boolean;
+  /** The final game of the session. */
+  final?: boolean;
   plusMinus: boolean;
   /** playerId → goal index when they joined (0 = from the start). */
   joinedAtGoal: Record<string, number>;

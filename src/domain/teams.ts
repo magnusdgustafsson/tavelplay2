@@ -66,6 +66,8 @@ export function randomizeTeams(
   playerIds: readonly string[],
   history: readonly PastLineup[],
   rng: Rng = Math.random,
+  /** Pairs that must end up on different teams (e.g. for the final game). */
+  separate: readonly (readonly [string, string])[] = [],
 ): { left: string[]; right: string[] } | null {
   const n = playerIds.length;
   if (n < 2) return null;
@@ -87,11 +89,22 @@ export function randomizeTeams(
       return Math.sign(diff) * diff * diff + (lastTogether.has(k) ? 1 : 0);
     }),
   );
+  // Index pairs that must be split. A huge cost steers the fast search away
+  // from them; the final choice below treats them as a hard rule.
+  const apart = separate
+    .map(([a, b]) => [playerIds.indexOf(a), playerIds.indexOf(b)] as const)
+    .filter(([i, j]) => i >= 0 && j >= 0 && i !== j);
+  for (const [i, j] of apart) {
+    w[i][j] += 1e6;
+    w[j][i] += 1e6;
+  }
 
   // Best splits found so far (indices of the left team), preferring new lineups.
+  // Rank: 0 = rules kept & new lineup, 1 = rules kept & used lineup,
+  // 2/3 = a rule broken (only if impossible otherwise).
   let best: number[][] = [];
   let bestCost = Infinity;
-  let bestFresh = false;
+  let bestRank = Infinity;
   const seen = new Set<string>();
   const consider = (left: number[], cost: number) => {
     const inLeft = new Set(left);
@@ -101,12 +114,13 @@ export function randomizeTeams(
     );
     if (seen.has(sig)) return;
     seen.add(sig);
-    const fresh = !used.has(sig);
-    if ((fresh && !bestFresh) || (fresh === bestFresh && cost < bestCost - EPS)) {
+    const broken = apart.some(([i, j]) => inLeft.has(i) === inLeft.has(j));
+    const rank = (broken ? 2 : 0) + (used.has(sig) ? 1 : 0);
+    if (rank < bestRank || (rank === bestRank && cost < bestCost - EPS)) {
       best = [left];
       bestCost = cost;
-      bestFresh = fresh;
-    } else if (fresh === bestFresh && Math.abs(cost - bestCost) < EPS) {
+      bestRank = rank;
+    } else if (rank === bestRank && Math.abs(cost - bestCost) < EPS) {
       best.push(left);
     }
   };

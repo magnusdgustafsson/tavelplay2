@@ -41,3 +41,30 @@ describe('rematch + swap', () => {
     expect(s.settings.leftColor).toBe(game.colors.left);
   });
 });
+
+describe('final game', () => {
+  beforeEach(() => useStore.getState().resetAll());
+
+  it('is drawn on request, marked as final and ends on the stats screen', () => {
+    playOneGame();
+    useStore.getState().goToTeamSelection(true);
+    expect(useStore.getState().finalDraw).not.toBeNull();
+    useStore.getState().startGame();
+    expect(useStore.getState().currentGame!.final).toBe(true);
+    useStore.getState().endGame();
+    const s = useStore.getState();
+    expect(s.screen).toBe('stats');
+    expect(s.games[s.games.length - 1].final).toBe(true);
+    expect(s.finalDraw).toBeNull();
+  });
+
+  it('going back to Player Entries cancels the final', () => {
+    playOneGame();
+    useStore.getState().goToTeamSelection(true);
+    useStore.getState().setScreen('entries');
+    expect(useStore.getState().finalDraw).toBeNull();
+    useStore.getState().goToTeamSelection();
+    useStore.getState().startGame();
+    expect(useStore.getState().currentGame!.final).toBeUndefined();
+  });
+});

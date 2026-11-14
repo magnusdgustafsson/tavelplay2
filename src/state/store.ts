@@ -24,6 +24,9 @@ import {
 import type { RemoveResult } from '../domain/game';
 import { isPlusMinusFair, pickStarters, randomizeTeams, reconcileTeams } from '../domain/teams';
 import type { PastLineup } from '../domain/teams';
+import { finalDrawRules } from '../domain/awards';
+import type { FinalDraw } from '../domain/awards';
+import { computePlayerStats } from '../domain/stats';
 import type { ThemeId } from '../themes';
 
 export type Screen =
@@ -52,6 +55,8 @@ interface Data {
   screen: Screen;
   /** Bumped when teams are freshly randomised → UI plays the shuffle animation. */
   shuffleNonce: number;
+  /** Set while the next game is the final: who the draw had to split up. */
+  finalDraw: FinalDraw | null;
   /** Bumped on every manual team edit → UI restarts the start-game countdown. */
   teamsEditNonce: number;
 }
@@ -68,7 +73,8 @@ interface Actions {
   addRecurring(name: string): boolean;
   removeRecurring(id: string): void;
 
-  goToTeamSelection(): void;
+  /** final = draw the final game (split tied crown / pig contenders). */
+  goToTeamSelection(final?: boolean): void;
   /** Previous lineup again, optionally with the teams changing ends. */
   rematch(swap?: boolean): void;
   /** From the game summary: same teams, swapped ends, straight to team selection. */
@@ -106,6 +112,7 @@ const initialData = (): Omit<Data, 'recurring' | 'theme' | 'settings'> => ({
   starters: null,
   screen: 'entries',
   shuffleNonce: 0,
+  finalDraw: null,
   teamsEditNonce: 0,
 });
 
@@ -171,7 +178,12 @@ export const useStore = create<Store>()(
         settings: { ...DEFAULT_SETTINGS },
         theme: 'c64',
 
-        setScreen: (screen) => set({ screen }),
+        setScreen: (screen) =>
+          set((s) => {
+            s.screen = screen;
+            // Going back to Player Entries cancels a planned final.
+            if (screen === 'entries') s.finalDraw = null;
+          }),
         setTheme: (theme) => set({ theme }),
         updateSettings: (patch) =>
           set((s) => {
@@ -223,7 +235,7 @@ export const useStore = create<Store>()(
             s.recurring = s.recurring.filter((r) => r.id !== id);
           }),
 
-        goToTeamSelection: () =>
+        goToTeamSelection: (final = false) =>
           set((s) => {
             const active = activePlayers(s).map((p) => p.id);
             if (active.length < 2) {
@@ -235,8 +247,13 @@ export const useStore = create<Store>()(
               rightGkId: s.teams?.rightGkId ?? null,
             };
             if (s.teams) s.previousTeams = JSON.parse(JSON.stringify(s.teams));
-            if (s.settings.randomTeamsEnabled || !s.teams) {
-              const r = randomizeTeams(active, sessionLineups(s.games))!;
+            s.finalDraw = final
+              ? finalDrawRules(s.players, computePlayerStats(s.players, s.games), active, s.settings.pigAwardEnabled)
+              : null;
+            if (final || s.settings.randomTeamsEnabled || !s.teams) {
+              const fd = s.finalDraw;
+              const separate = fd ? [fd.crown, fd.pig].filter((p): p is [string, string] => !!p) : [];
+              const r = randomizeTeams(active, sessionLineups(s.games), Math.random, separate)!;
               s.teams = { left: r.left, right: r.right, ...gk };
               s.shuffleNonce++;
             } else {
@@ -323,6 +340,7 @@ export const useStore = create<Store>()(
               activePlayers(s).length,
             );
             s.currentGame = createGame(s.teams, s.settings, plusMinus);
+            if (s.finalDraw) s.currentGame.final = true;
             s.screen = 'game';
           }),
         abandonGame: () =>
@@ -361,7 +379,9 @@ export const useStore = create<Store>()(
               rightGkId: s.teams?.rightGkId ?? null,
             };
             s.currentGame = null;
-            s.screen = 'summary';
+            // After the final: straight to today's stats and awards.
+            s.screen = g.final ? 'stats' : 'summary';
+            s.finalDraw = null;
           }),
         addPlayerDuringGame: (side, playerId) =>
           set((s) => {
@@ -398,7 +418,7 @@ export const useStore = create<Store>()(
         },
 
         finishSession: () => set({ screen: 'stats' }),
-        continueSession: () => get().goToTeamSelection(),
+        continueSession: () => get().goToTeamSelection(false),
         deleteGame: (id) =>
           set((s) => {
             s.games = s.games.filter((g) => g.id !== id);

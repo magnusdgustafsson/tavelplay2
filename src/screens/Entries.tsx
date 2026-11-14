@@ -113,7 +113,7 @@ export function Entries() {
         <button className="btn btn-secondary" onClick={() => setScreen('settings')}>
           Settings
         </button>
-        <button className="btn btn-primary" disabled={activeCount < 2} onClick={goToTeamSelection}>
+        <button className="btn btn-primary" disabled={activeCount < 2} onClick={() => goToTeamSelection()}>
           Continue
         </button>
       </div>

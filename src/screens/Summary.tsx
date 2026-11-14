@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Game } from '../domain/types';
 import { teamLabel } from '../domain/types';
 import { decisiveGoalIndex, gameScore } from '../domain/stats';
@@ -32,11 +33,16 @@ export function GoalTimeline({ game }: { game: Game }) {
   );
 }
 
+/** The "Final game" switch shows up from this many played games. */
+const FINAL_AFTER_GAMES = 4;
+
 export function Summary() {
   const games = useStore((s) => s.games);
   const { setScreen, goToTeamSelection, finishSession, rematchSwapFromSummary } = useStore.getState();
+  const [finalGame, setFinalGame] = useState(false);
   const game = games[games.length - 1];
   if (!game) return null;
+  const canFinal = games.length >= FINAL_AFTER_GAMES;
   const score = gameScore(game);
 
   return (
@@ -68,11 +74,26 @@ export function Summary() {
         <button className="btn btn-secondary" onClick={() => setScreen('history')}>
           View/Edit Games
         </button>
-        <button className="btn btn-secondary" onClick={rematchSwapFromSummary} title="Same teams, swapped ends">
-          Rematch + Swap ⇄
-        </button>
-        <button className="btn btn-primary" onClick={goToTeamSelection}>
-          Next Game
+        {!finalGame && (
+          <button className="btn btn-secondary" onClick={rematchSwapFromSummary} title="Same teams, swapped ends">
+            Rematch + Swap ⇄
+          </button>
+        )}
+        {canFinal && (
+          <label className={`final-toggle${finalGame ? ' on' : ''}`}>
+            <span>Final game</span>
+            <input
+              type="checkbox"
+              className="switch"
+              checked={finalGame}
+              onChange={(e) => setFinalGame(e.target.checked)}
+              aria-label="Make the next game the final game"
+            />
+            <strong>{finalGame ? 'YES' : 'NO'}</strong>
+          </label>
+        )}
+        <button className="btn btn-primary" onClick={() => goToTeamSelection(canFinal && finalGame)}>
+          {finalGame ? 'Final Game' : 'Next Game'}
         </button>
       </div>
     </div>
