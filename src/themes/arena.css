@@ -124,3 +124,7 @@
 [data-theme='arena'] .shuffle-scene svg {
   filter: drop-shadow(0 0 6px rgba(255, 176, 0, 0.45));
 }
+
+[data-theme='arena'] {
+  --chip-bg: #161b23;
+}

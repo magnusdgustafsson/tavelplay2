@@ -6,7 +6,8 @@ works offline once opened.
 
 ## Features
 
-- Players per session (max 20) and a saved list of recurring players
+- Players per session (max 20); recurring players are checked in with one
+  tap in a grid (Select all / Clear), guests are typed in
 - Random teams that remember every pair during the evening, so everyone
   plays with everyone about equally often (no lineup is repeated), a
   stick-throwing team draw animation, 60 s auto-start, edit teams, swap

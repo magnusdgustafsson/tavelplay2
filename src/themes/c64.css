@@ -99,3 +99,7 @@
 [data-theme='c64'] .shuffle-scene svg {
   shape-rendering: crispEdges;
 }
+
+[data-theme='c64'] .chip.on {
+  --chip-on-border: #000;
+}
